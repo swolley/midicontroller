@@ -6,7 +6,9 @@ import MinusIcon from "../icons/MinusIcon.vue";
 import ControllerLabel from "./ControllerLabel.vue";
 import { vOnLongPress } from "@vueuse/components";
 
-const emit = defineEmits(["changevalue"]);
+const emit = defineEmits<{
+    (event: "changevalue", value: number): void;
+}>();
 const props = defineProps<{
     controller: ILcdControllerConfigs;
     invert: boolean;
@@ -75,9 +77,14 @@ function decrementValue(e: Event, emit = true) {
     }
 }
 
+let changeValueTimeout: number | null = null;
+
 function changeValue(value: number, emitChange = true) {
-    currentValue.value = formatOutput(value);
-    if (emitChange) emit("changevalue", value);
+    if (changeValueTimeout) clearTimeout(changeValueTimeout);
+    setTimeout(() => {
+        currentValue.value = formatOutput(value);
+        if (emitChange) emit("changevalue", value);
+    }, 200);
 }
 </script>
 

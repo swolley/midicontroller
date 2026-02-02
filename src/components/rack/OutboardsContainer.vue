@@ -4,8 +4,8 @@
     <div class="rack relative flex flex-col">
         <div class="rack-side left"></div>
         <div class="rack-side right"></div>
-        <!-- preamps -->
-        <div class="rack-devices grow overflow-y-hidden">
+        <!-- preamps: flex-1 min-h-0 + overflow-y-auto so the list scrolls when devices don't fit -->
+        <div class="rack-devices flex-1 min-h-0 flex flex-col overflow-y-auto">
             <slot></slot>
         </div>
         <!-- footer -->
@@ -37,8 +37,7 @@
 
     .rack-devices {
         @apply z-10 relative;
-        // height: calc(100% - 110px);
-        overflow-y: scroll;
+        overflow-y: auto;
     }
     // .rack .rack-devices:has(+ .preamp-display:not(.full)) {
     //     height: calc(100% - 66px);

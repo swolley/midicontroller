@@ -1,12 +1,15 @@
-import type { IDeviceConfig, ILcdControllerConfigs, IMessageControllerConfigs } from "@/services/types/devices";
+import type Outboard from "@/services/classes/Outboard";
+import type { ILcdControllerConfigs, IMessageControllerConfigs } from "@/services/types/devices";
+import { reactive } from "vue";
 
-export function useDevice(device: IDeviceConfig) {
+export function useDevice(device: Outboard) {
+    const currentDevice = reactive<Outboard>(device) as Outboard;
     let hasPatch = false;
-    const lcds: ILcdControllerConfigs[] = device.controllers.lcds;
-    const rotaries: IMessageControllerConfigs[] = device.controllers.rotaries;
-    const toggles: IMessageControllerConfigs[] = device.controllers.toggles;
+    const lcds: ILcdControllerConfigs[] = currentDevice.controllers.lcds;
+    const rotaries: IMessageControllerConfigs[] = currentDevice.controllers.rotaries;
+    const toggles: IMessageControllerConfigs[] = currentDevice.controllers.toggles;
 
-    for (const controller of device.controllers.lcds) {
+    for (const controller of currentDevice.controllers.lcds) {
         if (controller.message === "programchange") {
             hasPatch = true;
             break;
@@ -25,5 +28,6 @@ export function useDevice(device: IDeviceConfig) {
         lcds,
         rotaries,
         toggles,
+        currentDevice,
     };
 }

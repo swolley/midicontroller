@@ -11,14 +11,17 @@ import PlusIcon from "../icons/PlusIcon.vue";
 import PaletteIcon from "../icons/PaletteIcon.vue";
 import { useRack } from "@/stores/useRack";
 import { ref } from "vue";
-import type { Outboard } from "@/services/classes/Outboard";
+import type Outboard from "@/services/classes/Outboard";
 import ConfirmDialog from "@/components/modals/ConfirmDialog.vue";
 import AngleDownIcon from "../icons/AngleDownIcon.vue";
 import AngleUpIcon from "../icons/AngleUpIcon.vue";
 import { StringUtils } from "@/services/classes/Utils";
 import type { CategorizedDeviceList } from "@/services/types/stores";
 
-defineEmits(["createdevice", "openeditor" /*, "closestore"*/]);
+defineEmits<{
+    (event: "createdevice"): void;
+    (event: "openeditor", device: Outboard): void;
+}>();
 
 const rackStore = useRack();
 rackStore.init();
@@ -34,8 +37,23 @@ if (keys.length === 1) remapped[keys[0]].opened = true;
 
 const groupedDevices = ref<SidebarDevices>(remapped);
 
+function getGhostParent() {
+    return document.body;
+}
+
+function onDragStart() {
+    document.body.classList.add("is-dragging");
+}
+
+function onDragEnd() {
+    document.body.classList.remove("is-dragging");
+}
+
 function onDrop(dropResult: DropResult, toList: keyof CategorizedDeviceList) {
-    if (dropResult.payload.list !== "rack" && toList !== dropResult.payload.device.category) {
+    if (dropResult.payload.list === "rack") {
+        // Dragging from rack (right) to store category (left): place device in this container
+        rackStore.moveDeviceToCategory(dropResult.payload.device, toList, dropResult.addedIndex, "rack");
+    } else if (dropResult.payload.list !== "rack" && toList !== dropResult.payload.device.category) {
         rackStore.moveDeviceToCategory(dropResult.payload.device, toList, dropResult.addedIndex);
     } else if (dropResult.removedIndex !== undefined && dropResult.addedIndex !== undefined) {
         rackStore.reorderCategoryDevices(dropResult.payload.device, dropResult.removedIndex, dropResult.addedIndex);
@@ -54,26 +72,30 @@ function askRemoveDevice(device: Outboard) {
 <template>
     <div class="sidebar">
         <div class="relative h-full">
-            <div
-                class="rounded border-2 border-dashed flex items-center justify-center p-5 m-1 mb-3 opacity-30 hover:opacity-70 transition-opacity cursor-pointer"
+            <button
+                class="rounded border-2 border-dashed flex w-full items-center justify-center p-5 m-1 mb-3 opacity-30 hover:opacity-70 transition-opacity cursor-pointer"
                 @click="$emit('createdevice')"
             >
                 <PlusIcon class="text-gray-100 text-xl" />
-            </div>
+            </button>
             <div v-for="(group, name) in (groupedDevices as SidebarDevices)" :key="name">
-                <div class="flex text-gray-500 items-center px-1 cursor-pointer" @click="group.opened = !group.opened">
-                    <div class="grow select-none">{{ StringUtils.ucFirst(name) }} ({{ groupedDevices[name].devices.length }})</div>
+                <button class="flex w-full text-gray-500 items-center px-1 cursor-pointer" @click="group.opened = !group.opened">
+                    <div class="grow select-none text-left">{{ StringUtils.ucFirst(name) }} ({{ groupedDevices[name].devices.length }})</div>
                     <AngleDownIcon v-if="group.opened" />
                     <AngleUpIcon v-else />
-                </div>
+                </button>
                 <Container
                     v-show="group.opened"
                     class="grow relative"
                     group-name="devices"
                     orientation="vertical"
+                    drag-class="dndrop-dragging-ghost"
+                    :get-ghost-parent="getGhostParent"
                     :data-group="name"
                     :get-child-payload="(index: number) => ({ list: name, device: group.devices[index] })"
                     @drop="(drop: DropResult) => onDrop(drop, name)"
+                    @drag-start="onDragStart"
+                    @drag-end="onDragEnd"
                 >
                     <template v-for="device in groupedDevices[name].devices" :key="device.id">
                         <Draggable class="relative last:mb-2 draggable-item">

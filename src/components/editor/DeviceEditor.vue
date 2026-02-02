@@ -8,9 +8,9 @@ import IconClose from "@/components/icons/CancelIcon.vue";
 import DragIcon from "@/components/icons/DragIcon.vue";
 import PlusIcon from "@/components/icons/PlusIcon.vue";
 import TrashIcon from "@/components/icons/TrashIcon.vue";
-import { ref } from "vue";
+import { reactive, ref } from "vue";
 import { useRack } from "@/stores/useRack";
-import type { Outboard } from "@/services/classes/Outboard";
+import type Outboard from "@/services/classes/Outboard";
 
 const props = defineProps<{
     device: Outboard;
@@ -20,6 +20,8 @@ const deviceStore = useRack();
 const backgroundInput = ref<HTMLInputElement>();
 const panelInput = ref<HTMLInputElement>();
 const borderInput = ref<HTMLInputElement>();
+
+const editingDevice = reactive<Outboard>(props.device);
 
 function onDrop(dropResult: DropResult, list: "rotaries" | "toggles" | "lcds") {
     // let result = applyDrag(groupIndex === "rack" ? props.rackDevices : props.availableDevices, dropResult);
@@ -37,47 +39,48 @@ function createController(type: "rotaries" | "toggles" | "lcds") {
     switch (type) {
         case "rotaries":
             (newController as IMessageControllerConfigs).type = "ROTARY";
-            (newController as IMessageControllerConfigs).label = "rotary-" + (props.device.controllers.rotaries.length + 1);
-            props.device.addController(newController as IMessageControllerConfigs);
+            (newController as IMessageControllerConfigs).label = "rotary-" + (editingDevice.controllers.rotaries.length + 1);
+            editingDevice.addController(newController as IMessageControllerConfigs);
             break;
         case "toggles":
             (newController as IMessageControllerConfigs).type = "TOGGLE";
-            (newController as IMessageControllerConfigs).label = "toggle-" + (props.device.controllers.toggles.length + 1);
-            props.device.addController(newController as IMessageControllerConfigs);
+            (newController as IMessageControllerConfigs).label = "toggle-" + (editingDevice.controllers.toggles.length + 1);
+            editingDevice.addController(newController as IMessageControllerConfigs);
             break;
         case "lcds":
             (newController as ILcdControllerConfigs).type = "LCD";
-            (newController as IMessageControllerConfigs).label = "lcd-" + (props.device.controllers.lcds.length + 1);
-            props.device.addController(newController as ILcdControllerConfigs);
+            (newController as IMessageControllerConfigs).label = "lcd-" + (editingDevice.controllers.lcds.length + 1);
+            editingDevice.addController(newController as ILcdControllerConfigs);
             break;
     }
 }
 
 function deleteController(controller: IControllerConfigs) {
-    // if (!Validators.isUnsignedInt(index, 0, props.device.controllers[type].length)) throw new Error("no valid color");
-    props.device.deleteController(controller);
+    // if (!Validators.isUnsignedInt(index, 0, editingDevice.controllers[type].length)) throw new Error("no valid color");
+    editingDevice.deleteController(controller);
 }
 
 function setBackgroundColor(event: Event, forcedValue?: string) {
-    deviceStore.changeDeviceBackgroundColor(props.device, forcedValue || (event.target as HTMLInputElement).value);
+    (editingDevice as Outboard).backgroundColor = forcedValue || (event.target as HTMLInputElement).value;
+    // deviceStore.changeDeviceBackgroundColor(editingDevice as Outboard, forcedValue || (event.target as HTMLInputElement).value);
 }
 
 function setPanelColor(event: Event, forcedValue?: string) {
-    deviceStore.changeDevicePanelColor(props.device, forcedValue || (event.target as HTMLInputElement).value);
+    (editingDevice as Outboard).panelColor = (editingDevice as Outboard, forcedValue || (event.target as HTMLInputElement).value);
 }
 
 function setBorderColor(event: Event, forcedValue?: string) {
-    deviceStore.changeDeviceBorderColor(props.device, forcedValue || (event.target as HTMLInputElement).value);
+    (editingDevice as Outboard).borderColor = (editingDevice as Outboard, forcedValue || (event.target as HTMLInputElement).value);
 }
 
 function setLabel(e: Event) {
-    deviceStore.changeDeviceLabel(props.device, (e.target as HTMLInputElement).value);
+    (editingDevice as Outboard).label = (editingDevice as Outboard, (e.target as HTMLInputElement).value);
 }
 </script>
 
 <template>
     <form v-if="device" class="select-none">
-        <div class="sticky inset-x-0 top-0 left-0 bg-black/80 border border-white/5 rounded pt-1 z-10 shadow mb-1">
+        <div class="inset-x-0 bg-black/80 border border-white/5 rounded pt-1 z-10 shadow mb-1">
             <div class="flex gap-2 px-2 ml-5" v-if="device">
                 <div class="flex flex-col grow">
                     <label for="deviceLabel" class="form-label">label</label>
@@ -95,14 +98,14 @@ function setLabel(e: Event) {
                             type="color"
                             name="backgroundColor"
                             class="bg-transparent grow cursor-pointer"
-                            :value="device.backgroundColor"
+                            :value="device.backgroundColor.toHex(false)"
                             @change="setBackgroundColor"
                             required
                         />
                         <IconClose
                             v-if="!device.backgroundColor.isTransparent()"
                             class="text-2xl p-1 cursor-pointer"
-                            @click="(event) => setBackgroundColor(event, 'transparent')"
+                            @click="(event: Event) => setBackgroundColor(event, 'transparent')"
                         />
                     </div>
                 </div>
@@ -118,14 +121,14 @@ function setLabel(e: Event) {
                             type="color"
                             name="panelColor"
                             class="bg-transparent grow cursor-pointer"
-                            :value="device.panelColor"
+                            :value="device.panelColor.toHex(false)"
                             @change="setPanelColor"
                             required
                         />
                         <IconClose
                             v-if="!device.backgroundColor.isTransparent()"
                             class="text-2xl p-1 cursor-pointer"
-                            @click="(event) => setPanelColor(event, 'transparent')"
+                            @click="(event: Event) => setPanelColor(event, 'transparent')"
                         />
                     </div>
                 </div>
@@ -141,14 +144,14 @@ function setLabel(e: Event) {
                             type="color"
                             name="borderColor"
                             class="bg-transparent grow cursor-pointer"
-                            :value="device.borderColor"
+                            :value="device.borderColor.toHex(false)"
                             @change="setBorderColor"
                             required
                         />
                         <IconClose
                             v-if="!device.backgroundColor.isTransparent()"
                             class="text-2xl p-1 cursor-pointer"
-                            @click="(event) => setBorderColor(event, 'transparent')"
+                            @click="(event: Event) => setBorderColor(event, 'transparent')"
                         />
                     </div>
                 </div>
@@ -160,6 +163,7 @@ function setLabel(e: Event) {
                 <label class="form-label">{{ type }}</label>
                 <Container
                     class="grow-0 shrink-0 gap-1 shadow-inner"
+                    drag-class="dndrop-dragging-ghost"
                     orientation="vertical"
                     lock-axis="y"
                     non-drag-area-selector=".field"
@@ -224,13 +228,13 @@ function setLabel(e: Event) {
                         </fieldset>
                     </Draggable>
                 </Container>
-                <div
+                <button
                     type="button"
-                    class="rounded border-2 border-dashed flex items-center justify-center px-2 py-1 m-1 mb-4 opacity-30 hover:opacity-70 transition-opacity cursor-pointer"
+                    class="rounded border-2 border-dashed flex w-full items-center justify-center px-2 py-1 m-1 mb-4 opacity-30 hover:opacity-70 transition-opacity cursor-pointer"
                     @click="createController(type)"
                 >
                     <PlusIcon class="text-gray-100 text-xl" />
-                </div>
+                </button>
             </template>
         </div>
     </form>

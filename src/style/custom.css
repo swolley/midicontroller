@@ -73,3 +73,29 @@ body {
 .column-drag-handle {
     @apply transition-opacity opacity-10 hover:opacity-40 cursor-pointer active:cursor-move;
 }
+
+/* Dragged ghost from vue-dndrop: always on top */
+.dndrop-dragging-ghost {
+    @apply z-[100];
+}
+
+/* When dragging from rack and pointer is over sidebar area: show ghost in preview style (like OutboardPreview) */
+body.dragging-over-sidebar .dndrop-dragging-ghost {
+    max-width: 18rem;
+    min-width: 10rem;
+}
+
+body.dragging-over-sidebar .dndrop-dragging-ghost .device .flex.grow.mt-2,
+body.dragging-over-sidebar .dndrop-dragging-ghost .device > div[class*="flex"][class*="justify-between"][class*="grow"] {
+    display: none !important;
+}
+
+body.dragging-over-sidebar .dndrop-dragging-ghost .device .px-2.flex-col .column-drag-handle,
+body.dragging-over-sidebar .dndrop-dragging-ghost .device .overflow-hidden.column-drag-handle {
+    display: none !important;
+}
+
+/* During drag, overlay must not block drop zones */
+body.is-dragging .sidebar-overlay {
+    pointer-events: none;
+}

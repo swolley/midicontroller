@@ -8,7 +8,7 @@ const notValidError = "Not a valid color";
 
 // @sealed
 // @Listener(new MyObjectListener())
-export class Outboard implements IDeviceConfig {
+export default class Outboard implements IDeviceConfig {
     private _id: string;
     private _label: string;
     private _backgroundColor: Color;
@@ -39,8 +39,8 @@ export class Outboard implements IDeviceConfig {
         this._logo = this.originalConfigs.logo;
         for (const type in this.originalConfigs.controllers) {
             for (const controller of this.originalConfigs.controllers[type as keyof IDeviceControllers]) {
-                controller.minValue = controller.minValue || 1;
-                controller.minValue = controller.maxValue || 127;
+                controller.minValue = controller.minValue || 0;
+                controller.maxValue = controller.maxValue || 127;
             }
         }
         this._controllers = this.originalConfigs.controllers;
@@ -54,17 +54,38 @@ export class Outboard implements IDeviceConfig {
         // };
     }
 
-    private static parseColor(color: Color | string | undefined): Color {
-        if (typeof color === "string" && color !== "transparent" && !Validators.isColor(color)) throw new Error(notValidError);
-        if (color === "transparent" || color === undefined) return new Color(0, 0, 0, 0);
-        return typeof color === "string" ? Color.createFromHex(color) : color;
+    public static parseColor(color: Color | string | undefined | null): Color {
+        if (color == null || color === "transparent") return new Color(0, 0, 0, 0);
+        if (color instanceof Color) return color;
+        if (typeof color === "object" && "r" in color && "g" in color && "b" in color) {
+            const o = color as { r: number; g: number; b: number; a?: number };
+            return new Color(o.r, o.g, o.b, o.a);
+        }
+        if (typeof color === "string") {
+            try {
+                return Color.createFromHex(color);
+            } catch {
+                try {
+                    return Color.createFromRgb(color);
+                } catch {
+                    return new Color(0, 0, 0, 0);
+                }
+            }
+        }
+        return new Color(0, 0, 0, 0);
+    }
+
+    private checkStock() {
+        if (this.stock) throw new Error("Stock Device cannot be modified");
     }
 
     get id(): string {
         return this._id;
     }
 
+    /** the device's unique identifier */
     set id(id: string) {
+        this.checkStock();
         this._id = id;
     }
 
@@ -72,7 +93,9 @@ export class Outboard implements IDeviceConfig {
         return this._label;
     }
 
+    /** the device's label */
     set label(label: string) {
+        this.checkStock();
         this._label = label;
     }
 
@@ -80,7 +103,9 @@ export class Outboard implements IDeviceConfig {
         return this._backgroundColor;
     }
 
+    /** the device's background color */
     set backgroundColor(color: Color | string) {
+        this.checkStock();
         this._backgroundColor = Outboard.parseColor(color);
     }
 
@@ -88,7 +113,9 @@ export class Outboard implements IDeviceConfig {
         return this._panelColor;
     }
 
+    /** the device's panel color */
     set panelColor(color: Color | string) {
+        this.checkStock();
         this._panelColor = Outboard.parseColor(color);
     }
 
@@ -96,7 +123,9 @@ export class Outboard implements IDeviceConfig {
         return this._borderColor;
     }
 
+    /** the device's border color */
     set borderColor(color: Color | string) {
+        this.checkStock();
         this._borderColor = Outboard.parseColor(color);
     }
 
@@ -104,8 +133,10 @@ export class Outboard implements IDeviceConfig {
         return this._borderSize;
     }
 
+    /** the device's border size */
     set borderSize(size: number) {
-        if (size <= 0) throw new Error(notValidError);
+        this.checkStock();
+        if (size < 0) throw new Error(notValidError);
         this._borderSize = size;
     }
 
@@ -113,7 +144,9 @@ export class Outboard implements IDeviceConfig {
         return this._hasMultiSelection;
     }
 
+    /** whether the device supports multi-selection */
     set hasMultiSelection(value: boolean) {
+        this.checkStock();
         this._hasMultiSelection = value;
     }
 
@@ -121,7 +154,9 @@ export class Outboard implements IDeviceConfig {
         return this._category;
     }
 
+    /** the device's category */
     set category(value: string | undefined) {
+        this.checkStock();
         if (value && value.length) throw new Error(notValidError);
         this._category = value !== undefined && value.length > 0 ? value : "uncategorized";
     }
@@ -130,7 +165,9 @@ export class Outboard implements IDeviceConfig {
         return this._style;
     }
 
+    /** the device's rotary style */
     set style(value: RotaryStyle) {
+        this.checkStock();
         this._style = value;
     }
 
@@ -138,7 +175,9 @@ export class Outboard implements IDeviceConfig {
         return this._logo;
     }
 
+    /** the device's logo */
     set logo(value: string | undefined) {
+        this.checkStock();
         if (value && value.length) throw new Error(notValidError);
         this._logo = value;
     }
@@ -147,7 +186,9 @@ export class Outboard implements IDeviceConfig {
         return this._channel;
     }
 
+    /** the device's MIDI channel  */
     set channel(channel: ChannelRange) {
+        this.checkStock();
         this._channel = channel;
     }
 
@@ -155,10 +196,13 @@ export class Outboard implements IDeviceConfig {
         return this._output;
     }
 
+    /** the device's MIDI output interface */
     set outputInterface(output: Output | undefined) {
+        this.checkStock();
         this._output = output;
     }
 
+    /* the device's list of controllers */
     get controllers(): IDeviceControllers {
         return this._controllers;
     }
@@ -175,6 +219,7 @@ export class Outboard implements IDeviceConfig {
     }
 
     public addController(controller: IControllerConfigs) {
+        this.checkStock();
         const list: IControllerConfigs[] = this.getControllerList(controller);
         const foundIdx = list.findIndex((c) => c.label === controller.label);
         if (foundIdx !== -1) throw new Error("Controller already exists");
@@ -183,6 +228,7 @@ export class Outboard implements IDeviceConfig {
     }
 
     public deleteController(controller: IControllerConfigs) {
+        this.checkStock();
         const list: IControllerConfigs[] = this.getControllerList(controller);
         const foundIdx = this.controllers.lcds.findIndex((c) => c.label === controller.label);
         if (foundIdx === -1) throw new Error("Controller not found");
@@ -213,13 +259,14 @@ export class Outboard implements IDeviceConfig {
     //     ) as IDeviceConfig;
     // }
 
+    /** Plain object for JSON serialization (JS has no built-in class serialize like PHP). */
     toJSON(): IDeviceConfig {
         return {
             id: this.id,
             label: this.label,
-            backgroundColor: this.backgroundColor,
-            panelColor: this.panelColor.toHex(),
-            borderColor: this.borderColor.toHex(),
+            backgroundColor: typeof this.backgroundColor === "string" ? this.backgroundColor : this.backgroundColor.toHex(),
+            panelColor: typeof this.panelColor === "string" ? this.panelColor : this.panelColor.toHex(),
+            borderColor: typeof this.borderColor === "string" ? this.borderColor : this.borderColor.toHex(),
             borderSize: this.borderSize,
             style: this.style,
             stock: this.stock,

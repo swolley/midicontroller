@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import DeviceContainer from "./DeviceContainer.vue";
 import type { LedStatus, IConsoleLog } from "@/services/types/devices";
-import { computed, ref, watch } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import LightLed from "@/components/controllers/LightLed.vue";
 import type RackConsole from "@/services/classes/RackConsole";
 import Color from "@/services/classes/Color";
@@ -12,7 +12,7 @@ const props = defineProps<{
     console: RackConsole;
 }>();
 
-const logs = computed(() => props.console.logs);
+const logs = reactive(props.console.logs);
 const ledStatus = ref<LedStatus>("off");
 let blinkTimeout: number | null = null;
 const currentlyCollapsed = ref<boolean>(props.collapsed);

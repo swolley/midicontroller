@@ -7,10 +7,10 @@ defineProps<{ collapsed: boolean; invert: boolean }>();
 
 <template>
     <div :class="{ invert: invert }">
-        <button v-if="!collapsed" class="btn h-6 aspect-square" @click="$emit('togglecollapse')">
+        <button v-if="!collapsed" class="btn h-6 aspect-square" @click="$emit('togglecollapse')" @touchend="$emit('togglecollapse')">
             <AngleUpIcon />
         </button>
-        <button v-else class="btn h-6 aspect-square" @click="$emit('togglecollapse')">
+        <button v-else class="btn h-6 aspect-square" @click="$emit('togglecollapse')" @touchend="$emit('togglecollapse')">
             <AngleDownIcon />
         </button>
     </div>

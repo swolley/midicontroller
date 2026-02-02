@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import RackContainer from "@/components/rack/RackContainer.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRack } from "@/stores/useRack";
 import ModalPanel from "@/components/modals/ModalPanel.vue";
 import SidebarStore from "@/components/devices/SidebarStore.vue";
 import DeviceEditor from "@/components/editor/DeviceEditor.vue";
 import AppConfig from "@/components/editor/AppConfig.vue";
-import { Outboard } from "@/services/classes/Outboard";
+import Outboard from "@/services/classes/Outboard";
 import { SwipeDirection, useSwipe } from "@vueuse/core";
+import { useWindowSize } from "@vueuse/core";
 
+const { width } = useWindowSize();
+const isDesktop = computed(() => width.value >= 1024);
+const isTablet = computed(() => width.value >= 768 && width.value < 1024);
+const isMobile = computed(() => !isDesktop.value && !isTablet.value);
 const rackStore = useRack();
-const showStore = ref<boolean>(rackStore.rackDevices.length === 0);
+const showStore = ref<boolean>(false);
 const modifiedDevice = ref<Outboard | undefined>();
 const openSettings = ref<boolean>(false);
 const openEditor = ref<boolean>(false);
@@ -57,13 +62,21 @@ function createDevice() {
 </script>
 
 <template>
-    <main class="h-full flex">
+    <main class="h-full flex overflow-x-hidden">
         <SidebarStore
-            class="absolute md:static z-50 max-w-1/2 lg:max-w-1/4 xl:max-w-1/5"
-            :class="[{ 'p-2': showStore }, showStore ? 'w-1/2 lg:w-1/4 xl:w-1/5' : 'w-0']"
+            class="absolute left-0 top-0 h-full w-[85%] max-w-[20rem] md:relative md:max-w-1/2 lg:max-w-1/4 xl:max-w-1/5 transition-transform duration-300 ease-out md:transition-[width] md:duration-300 md:transform-none overflow-hidden"
+            :class="[{ 'p-2': showStore, 'z-50': isMobile }, showStore ? 'translate-x-0 md:w-1/2 lg:w-1/4 xl:w-1/5' : '-translate-x-full md:w-0']"
             @openeditor="toggleEditor"
             @createdevice="createDevice"
             @closestore="showStore = false"
+        />
+
+        <!-- On mobile: overlay to close sidebar when clicking outside (pointer-events: none during drag so drops work) -->
+        <div
+            v-if="isMobile && showStore"
+            class="sidebar-overlay fixed inset-0 z-40 bg-black/20 md:hidden"
+            aria-hidden
+            @click="showStore = false"
         />
 
         <RackContainer
@@ -71,7 +84,10 @@ function createDevice() {
             class="w-full"
             @openeditor="toggleEditor"
             @togglestore="showStore = !showStore"
+            @openstore="showStore = true"
             @togglesettings="openSettings = !openSettings"
+            :isStoreOpened="showStore"
+            :areSettingsOpened="openSettings"
         />
 
         <Teleport to="body">

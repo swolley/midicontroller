@@ -4,7 +4,9 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import ControllerLabel from "./ControllerLabel.vue";
 import { getOffset } from "./../../services/classes/Utils";
 
-const emit = defineEmits(["changevalue"]);
+const emit = defineEmits<{
+    (event: "changevalue", value: number): void;
+}>();
 const props = withDefaults(
     defineProps<{
         controller: IMessageControllerConfigs;
@@ -25,12 +27,11 @@ const props = withDefaults(
     }
 );
 const rotary = ref<HTMLElement>();
-
-const currentValue = ref<number>(props.controller.value || props.controller.minValue || 0);
-const steps = (props.controller.maxValue || 127) - (props.controller.minValue || 0);
+const currentValue = ref<number>(props.controller.value || ((props.controller.minValue as number) + (props.controller.maxValue as number)) / 2);
+const steps = (props.controller.maxValue as number) - (props.controller.minValue as number);
 const maxDeg = props.beginDeg + props.lengthDeg;
 const degPerStep = props.lengthDeg / steps;
-const rotate = computed(() => currentValue.value * degPerStep - props.beginDeg - 90);
+const rotate = computed(() => currentValue.value * degPerStep - props.beginDeg - 135);
 const rotateStyle = computed(() => `${rotate.value}deg`);
 
 let startY = 0;
@@ -39,15 +40,23 @@ let movement = 0;
 let isChanging = false;
 
 let changeTimeout: number | null = null;
+let wheelEmitTimeout: number | null = null;
 
 function onMouseWheel(e: WheelEvent) {
-    if (e.deltaY < 0 && currentValue.value < (props.controller.maxValue || 127)) {
+    e.preventDefault();
+    if (e.deltaY < 0 && currentValue.value < (props.controller.maxValue as number)) {
         currentValue.value++;
-    } else if (currentValue.value > (props.controller.minValue || 0)) {
+    } else if (currentValue.value > (props.controller.minValue as number)) {
         currentValue.value--;
     }
-    console.log(currentValue.value, rotate.value);
+    // Debounce: emit MIDI when user stops scrolling the wheel
+    if (wheelEmitTimeout) clearTimeout(wheelEmitTimeout);
+    wheelEmitTimeout = window.setTimeout(() => {
+        emit("changevalue", currentValue.value);
+        wheelEmitTimeout = null;
+    }, 500);
 }
+
 function onMouseDown(e: MouseEvent) {
     if (changeTimeout) clearTimeout(changeTimeout);
     if (e.ctrlKey) {
@@ -56,6 +65,7 @@ function onMouseDown(e: MouseEvent) {
         startMouseRotation(e);
     }
 }
+
 function onMouseMove(e: MouseEvent) {
     const degrees = calculateMoveDeg(e.pageY);
     if (degrees !== movement) {
@@ -63,7 +73,9 @@ function onMouseMove(e: MouseEvent) {
         movement = degrees;
         currentValue.value = Math.round(degrees / degPerStep);
     }
+    degPerStep;
 }
+
 function onMouseUp() {
     document.removeEventListener("mouseup", onMouseUp);
     document.removeEventListener("mousemove", onMouseMove);
@@ -75,107 +87,25 @@ function onMouseUp() {
         }, 250);
     }
 }
+
 function startMouseRotation(e: MouseEvent) {
-    startY = e.pageY;
+    const initialPageY = e.pageY;
     direction = rotary.value && e.pageX > getOffset(rotary.value || null).left ? -1 : 1;
+    const minVal = props.controller.minValue as number;
+    const currentAngle = props.beginDeg + (currentValue.value - minVal) * degPerStep;
+    startY = currentAngle - initialPageY * direction;
     document.addEventListener("mouseup", onMouseUp);
     document.addEventListener("mousemove", onMouseMove);
 }
+
 function resetToMiddleValue() {
     currentValue.value = Math.round(steps / 2);
 }
 
 function onTouchStart(event: TouchEvent) {
     event.preventDefault();
-    // mousePosition.x = event./*originalEvent.*/ targetTouches[0].pageX;
-    // mousePosition.y = event./*originalEvent.*/ targetTouches[0].pageY;
-    // startHandling(event.target as EventTarget);
 }
-// function onTouchEnd(event: TouchEvent) {
-//     stopHandling(event.target as EventTarget);
-// }
-// function onTouchMove(event: TouchEvent) {
-//     event.preventDefault();
-//     mousePosition.x = event./*originalEvent.*/ targetTouches[0].pageX;
-//     mousePosition.y = event./*originalEvent.*/ targetTouches[0].pageY;
-//     calculateSwitchDeg();
-//     calculateValueByDeg();
-//     rotateSwitch(false);
-//     setValueToInput();
-// }
 
-// function startHandling(target: EventTarget) {
-//     calculateSwitchDeg();
-//     calculateValueByDeg();
-//     rotateSwitch(false);
-//     setValueToInput();
-//     document.addEventListener("mouseup", onMouseUp.bind(target));
-//     document.addEventListener("mousemove", onMouseMove.bind(target));
-//     document.addEventListener("touchend", onTouchEnd.bind(target));
-//     document.addEventListener("touchmove", onTouchMove.bind(target));
-//     // this.domElements.main.addClass("active");
-// }
-// function stopHandling(target: EventTarget) {
-//     document.removeEventListener("mouseup", onMouseUp.bind(target));
-//     document.removwitchDeg = 0;
-// let valueInPercent = 0;
-// let lastTriggeredValue = -1;entListener("mousemove", onMouseMove.bind(target));
-//     document.removeEventListener("touchend", onTouchEnd.bind(target));
-//     document.removeEventListener("touchmove", onTouchMove.bind(target));
-//     rotateSwitch(true);
-//     // this.domElements.main.removeClass("active");
-// }
-
-// function setValueToInput() {
-//     if (currentValue.value !== lastTriggeredValue) {
-//         lastTriggeredValue = currentValue.value;
-//         // this.element.val(currentValue.value).trigger({ type: "change", plugin: this });
-//     }
-// }
-
-// function calculateSwitchDeg() {
-//     var offset = rotary.value.offsetTop,
-//         radians = Math.atan2(mousePosition.x - (offset.left + rotary.value.outherWidth / 2), mousePosition.y - (offset.top + rotary.value.outherHeight / 2));
-
-//     if (mousePosition.x !== -1) {
-//         switchDeg = radians * (180 / Math.PI) * -1 + 180;
-//     }
-// }
-
-// // eslint-disable-next-line sonarjs/cognitive-complexity
-// function calculateValueByDeg() {
-//     const minimum = props.controller.minValue || 0;
-//     const maximum = props.controller.maxValue || 127;
-//     const range = maximum - minimum;
-//     let value = 0;
-
-//     valueInPercent = switchDeg - props.beginDeg > 0 ? (switchDeg - props.beginDeg) / props.lengthDeg : (switchDeg - props.beginDeg + 360) / props.lengthDeg;
-
-//     if (valueInPercent > 1) valueInPercent = valueInPercent > (360 / props.lengthDeg - 1) / 2 + 1 ? 0 : 1;
-
-//     value = ~~((range * valueInPercent < 0 ? -0.5 : 0.5) + (range * valueInPercent) / props.step) * props.step;
-//     value += props.controller.minValue || 0;
-
-//     if (props.lengthDeg === 360 && (value === minimum || value === maximum)) {
-//         currentValue.value = props.minimumOverMaximum ? minimum : maximum;
-//         emit("changevalue", currentValue.value);
-//     }
-// }
-
-// function rotateSwitch(snap: boolean) {
-//     let deg = 0;
-//     const exactDeg = valueInPercent * props.lengthDeg;
-//     const roundedDeg = (currentValue.value / steps) * props.lengthDeg - (props.controller.minValue || 0) * degPerStep;
-//     const difference = Math.abs(Math.abs(exactDeg) - Math.abs(roundedDeg));
-
-//     if (snap || (props.snapInMotion && difference < degPerStep / 6)) {
-//         deg = roundedDeg + props.beginDeg < 360 ? roundedDeg + props.beginDeg : roundedDeg + props.beginDeg - 360;
-//     } else {
-//         deg = exactDeg + props.beginDeg < 360 ? exactDeg + props.beginDeg : exactDeg + props.beginDeg - 360;
-//     }
-
-//     currentValue.value = deg;
-// }
 function calculateMoveDeg(mouseY: number): number {
     let diff = (startY + mouseY * direction) % 360;
     if (diff > maxDeg /*|| (startY - mouseY) / 360 > 1*/) {
@@ -185,16 +115,16 @@ function calculateMoveDeg(mouseY: number): number {
     }
 
     const steps = Math.round(diff / degPerStep);
-    const degrees = steps * degPerStep;
 
-    console.log("diff:", diff, "degrees:", degrees, "steps:", steps, "minDeg:", props.beginDeg, "maxDeg:", maxDeg);
     return steps * degPerStep;
 }
 
 onMounted(() => {
-    if (rotary.value) rotary.value.addEventListener("wheel", onMouseWheel);
+    if (rotary.value) rotary.value.addEventListener("wheel", onMouseWheel, { passive: false });
 });
+
 onUnmounted(() => {
+    if (wheelEmitTimeout) clearTimeout(wheelEmitTimeout);
     if (rotary.value) rotary.value.removeEventListener("wheel", onMouseWheel);
 });
 </script>

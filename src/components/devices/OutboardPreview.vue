@@ -2,7 +2,7 @@
 import { useColors } from "@/composables/useColors";
 import { computed, ref } from "vue";
 import RotaryIcon from "@/components/icons/RotaryIcon.vue";
-import type { Outboard } from "@/services/classes/Outboard";
+import type Outboard from "@/services/classes/Outboard";
 
 const props = defineProps<{
     device: Outboard;

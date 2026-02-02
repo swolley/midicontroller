@@ -1,11 +1,11 @@
-import { Midi } from "@/services/classes/Midi";
+import Midi from "@/services/classes/Midi";
 import RackConsole from "@/services/classes/RackConsole";
 import type { IDeviceConfig } from "@/services/types/devices";
 import type { CategorizedDeviceList, IAppStoreProps } from "@/services/types/stores";
 import { defineStore, type StateTree } from "pinia";
 import type { Output } from "webmidi";
 import outboards from "../../config/outboard";
-import { Outboard } from "@/services/classes/Outboard";
+import Outboard from "@/services/classes/Outboard";
 
 const consoleColor = ["%cRackStore", "color: #437bad"];
 
@@ -57,24 +57,25 @@ export const useRack = defineStore("rack", {
     getters: {
         device: (state) => (id: string) => {
             return (
-                (state.rackDevices as Outboard[]).find((d) => d.id === id) ||
+                (state.rackDevices as Outboard[]).find((d: Outboard) => d.id === id) ||
                 Object.values(state.availableDevices)
                     .flat()
-                    .find((d) => d.id === id)
+                    .find((d: Outboard) => d.id === id)
             );
         },
         rackDevice: (state) => (id: string) => {
-            return (state.rackDevices as Outboard[]).find((d) => d.id === id);
+            return (state.rackDevices as Outboard[]).find((d: Outboard) => d.id === id);
         },
         storeDevice: (state) => (id: string) => {
             return Object.values(state.availableDevices)
                 .flat()
-                .find((d) => d.id === id);
+                .find((d: Outboard) => d.id === id);
         },
         interfaces: (state) => () => {
             return [...(state.midi ? (state.midi.activeOutputs as Output[]) : []), ...(state.http ? (state.http.activeOutputs as unknown[]) : [])];
         },
-        totalDevices: (state) => Object.values(state.availableDevices).reduce((acc, category) => acc + category.length, 0) + state.rackDevices.length,
+        totalDevices: (state) =>
+            Object.values(state.availableDevices).reduce((acc: number, category: Outboard[]) => acc + category.length, 0) + state.rackDevices.length,
     },
     actions: {
         async init() {
@@ -98,15 +99,15 @@ export const useRack = defineStore("rack", {
                     this.availableDevices = groups;
 
                     logInitFinished(
-                        Object.values(this.availableDevices).reduce((acc, category) => acc + category.length, 0),
+                        Object.values(this.availableDevices).reduce((acc: number, category: Outboard[]) => acc + category.length, 0),
                         Object.keys(this.availableDevices).length
                     );
                 }
 
-                this.console = this.console = new RackConsole();
+                this.console = new RackConsole();
                 this.midi = await Midi.init();
                 // this.http = await Http.init();
-                return true;
+                return this.midi !== undefined;
             } catch (e) {
                 console.error(...consoleColor, (e as Error).message);
                 return false;
@@ -116,7 +117,7 @@ export const useRack = defineStore("rack", {
             try {
                 const fromCategory = device.category;
                 if (!(fromCategory in this.availableDevices)) throw new Error(`Category ${fromCategory} not available`);
-                const fromIdx = this.availableDevices[fromCategory].findIndex((d) => d.id === device.id);
+                const fromIdx = this.availableDevices[fromCategory].findIndex((d: Outboard) => d.id === device.id);
                 moveDevice(this.availableDevices[fromCategory], fromIdx, this.rackDevices as Outboard[], toIdx, fromCategory, "rack", device);
             } catch (e) {
                 console.error(...consoleColor, (e as Error).message);
@@ -148,7 +149,7 @@ export const useRack = defineStore("rack", {
                 }
                 if (!(toCategory in this.availableDevices)) throw new Error(`Category ${toCategory} not available`);
                 const destinatioList = this.availableDevices[toCategory];
-                const fromIdx = originList.findIndex((d) => d.id === device.id);
+                const fromIdx = originList.findIndex((d: Outboard) => d.id === device.id);
 
                 moveDevice(originList, fromIdx, destinatioList, toIdx, fromCategory, toCategory, device);
             } catch (e) {
@@ -189,39 +190,64 @@ export const useRack = defineStore("rack", {
             return new Outboard(newDevice);
         },
 
-        changeDeviceInterface(device: Outboard, outputInterface: Output | undefined) {
-            device.outputInterface = outputInterface;
-        },
-        changeDeviceBackgroundColor(device: Outboard, backgroundColor: string) {
-            device.backgroundColor = backgroundColor;
-        },
-        changeDevicePanelColor(device: Outboard, panelColor: string) {
-            device.panelColor = panelColor;
-        },
-        changeDeviceBorderColor(device: Outboard, borderColor: string) {
-            device.borderColor = borderColor;
-        },
-        changeDeviceId(device: Outboard, id: string) {
-            device.id = id;
-        },
-        changeDeviceLabel(device: Outboard, label: string) {
-            device.label = label;
-        },
+        // changeDeviceInterface(device: Outboard, outputInterface: Output | undefined) {
+        //     device.outputInterface = outputInterface;
+        // },
+        // changeDeviceBackgroundColor(device: Outboard, backgroundColor: string) {
+        //     device.backgroundColor = backgroundColor;
+        // },
+        // changeDevicePanelColor(device: Outboard, panelColor: string) {
+        //     device.panelColor = panelColor;
+        // },
+        // changeDeviceBorderColor(device: Outboard, borderColor: string) {
+        //     device.borderColor = borderColor;
+        // },
+        // changeDeviceId(device: Outboard, id: string) {
+        //     device.id = id;
+        // },
+        // changeDeviceLabel(device: Outboard, label: string) {
+        //     device.label = label;
+        // },
     },
     persist: {
+        key: "rack",
+        storage: localStorage,
         paths: ["rackDevices", "availableDevices"],
+        debug: import.meta.env.DEV,
         serializer: {
-            serialize(state) {
-                return JSON.stringify(state);
-            },
-            deserialize(value) {
-                const newState: StateTree = JSON.parse(value);
-                newState.rackDevices = newState.rackDevices.map((d: IDeviceConfig) => new Outboard(d));
-                for (const category in newState.availableDevices) {
-                    newState.availableDevices[category] = newState.availableDevices[category].map((d: IDeviceConfig) => new Outboard(d));
+            /** Serialize to plain JSON (JS has no PHP-style serialize; we use toJSON + reconstruct on load). */
+            serialize(state: StateTree) {
+                const s = state as IAppStoreProps;
+                const rackDevices = (s.rackDevices as Outboard[]).map((d) => d.toJSON());
+                const availableDevices: Record<string, IDeviceConfig[]> = {};
+                for (const category of Object.keys(s.availableDevices)) {
+                    availableDevices[category] = (s.availableDevices[category] as Outboard[]).map((d) => d.toJSON());
                 }
+                return JSON.stringify({ rackDevices, availableDevices });
+            },
+            /** Deserialize and reconstruct class instances (plain object -> new Outboard(d)). */
+            deserialize(value: string): StateTree {
+                try {
+                    const raw = JSON.parse(value) as Record<string, unknown>;
+                    if (!raw || typeof raw !== "object") return { rackDevices: [], availableDevices: {} };
 
-                return newState as IAppStoreProps;
+                    const rackDevices = Array.isArray(raw.rackDevices)
+                        ? (raw.rackDevices as IDeviceConfig[]).map((d) => new Outboard(d))
+                        : [];
+
+                    const availableDevices: CategorizedDeviceList = {};
+                    if (raw.availableDevices && typeof raw.availableDevices === "object" && !Array.isArray(raw.availableDevices)) {
+                        for (const category of Object.keys(raw.availableDevices)) {
+                            const list = (raw.availableDevices as Record<string, unknown[]>)[category];
+                            availableDevices[category] = Array.isArray(list) ? (list as IDeviceConfig[]).map((d) => new Outboard(d)) : [];
+                        }
+                    }
+
+                    return { rackDevices, availableDevices };
+                } catch (e) {
+                    if (import.meta.env.DEV) console.error(...consoleColor, "Failed to restore persisted state", e);
+                    return { rackDevices: [], availableDevices: {} };
+                }
             },
         },
     },
