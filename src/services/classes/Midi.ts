@@ -42,20 +42,20 @@ export default class Midi extends AbstractComunicator implements IComunicatorInt
             console.info(...consoleColor, "Sysex enabled:", WebMidi.interface.sysexEnabled);
 
             // Gestione più sicura degli input
-            WebMidi.inputs.forEach((entry) => {
-                try {
-                    entry.addListener("midimessage", (e) =>
-                        Midi.onMIDIMessage(
-                            e.target,
-                            e.message.type as MessageType,
-                            ((e as unknown as Record<string, unknown>).dataBytes as [number, number])[0],
-                            ((e as unknown as Record<string, unknown>).dataBytes as [number, number])[1]
-                        )
-                    );
-                } catch (error) {
-                    console.warn(...consoleColor, "Error adding listener to input:", error);
-                }
-            });
+            // WebMidi.inputs.forEach((entry) => {
+            //     try {
+            //         entry.addListener("midimessage", (e) =>
+            //             Midi.onMIDIMessage(
+            //                 e.target,
+            //                 e.message.type as MessageType,
+            //                 ((e as unknown as Record<string, unknown>).dataBytes as [number, number])[0],
+            //                 ((e as unknown as Record<string, unknown>).dataBytes as [number, number])[1]
+            //             )
+            //         );
+            //     } catch (error) {
+            //         console.warn(...consoleColor, "Error adding listener to input:", error);
+            //     }
+            // });
 
             return new Midi(WebMidi.inputs, WebMidi.outputs, disabled);
         } catch (err) {
@@ -104,13 +104,13 @@ export default class Midi extends AbstractComunicator implements IComunicatorInt
         return true;
     }
 
-    private static onMIDIMessage(input: Input | InputChannel, messageType: MessageType, note: number, velocity: number) {
-        switch (messageType) {
-            case "controlchange":
-            case "programchange":
-            case "noteon":
-                console.log(messageType, note, velocity);
-                break;
-        }
-    }
+    // private static onMIDIMessage(input: Input | InputChannel, messageType: MessageType, note: number, velocity: number) {
+    //     switch (messageType) {
+    //         case "controlchange":
+    //         case "programchange":
+    //         case "noteon":
+    //             console.log(messageType, note, velocity);
+    //             break;
+    //     }
+    // }
 }

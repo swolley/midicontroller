@@ -94,9 +94,9 @@ export default abstract class AbstractComunicator {
         let dec_value = value
             .split("")
             .reverse()
-            .reduce(function (carry, digit, index) {
+            .reduce((carry: number, digit: string, index: number) => {
                 if (from_range.indexOf(digit) === -1) throw new Error("Invalid digit `" + digit + "` for base " + from_base + ".");
-                return (carry += from_range.indexOf(digit) * Math.pow(from_base, index));
+                return carry + from_range.indexOf(digit) * Math.pow(from_base, index);
             }, 0);
 
         let new_value = "";

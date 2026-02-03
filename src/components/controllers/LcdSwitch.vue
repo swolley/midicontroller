@@ -84,7 +84,7 @@ function changeValue(value: number, emitChange = true) {
     setTimeout(() => {
         currentValue.value = formatOutput(value);
         if (emitChange) emit("changevalue", value);
-    }, 200);
+    }, wait);
 }
 </script>
 

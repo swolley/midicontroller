@@ -2,7 +2,7 @@
 import DeviceContainer from "./DeviceContainer.vue";
 import type { IMessageControllerConfigs, ILcdControllerConfigs, LedStatus } from "@/services/types/devices";
 import { useColors } from "@/composables/useColors";
-import { computed, ref } from "vue";
+import { ref } from "vue";
 import { useDevice } from "@/composables/useDevice";
 // import UploadIcon from "../icons/UploadIcon.vue";
 // import DownloadIcon from "../icons/DownloadIcon.vue";
@@ -41,7 +41,7 @@ const lastValue = ref<string | undefined>();
 
 let blinkTimeout: number | null = null;
 let displayTimeout: number | null = null;
-const blinkDuration = 100;
+const blinkDuration = 300;
 
 function changeInteface(output: Output | undefined) {
     // deviceStore.changeDeviceInterface(currentDevice, output);
@@ -186,7 +186,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                             />
                         </template>
                     </div>
-                    <div class="flex flex-wrap" v-if="toggles.length">
+                    <div class="flex flex-wrap gap-1" v-if="toggles.length">
                         <ToggleButton
                             v-for="(toggle, idx) in toggles"
                             class="w-16 justify-start my-2"
@@ -197,9 +197,9 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                             :data-controller="toggle.label"
                         />
                     </div>
-                    <div class="grid gap-3 xl:grid-flow-col" :class="toggles.length > 0 ? 'complete-layout' : 'rotaries-layout'" v-if="rotaries.length">
+                    <div class="flex flex-wrap gap-3 items-start" v-if="rotaries.length">
                         <RotaryButton
-                            class="w-16 justify-start"
+                            class="w-16"
                             v-for="(rotary, idx) in rotaries"
                             :key="idx"
                             :controller="rotary"
@@ -216,10 +216,10 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
 
 <style scoped lang="scss">
 .complete-layout {
-    @apply grid-cols-3 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5;
+    @apply grid grid-cols-3 sm:grid-cols-5 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5;
 }
 
 .rotaries-layout {
-    @apply grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8;
+    @apply flex flex-wrap
 }
 </style>

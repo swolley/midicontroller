@@ -5,7 +5,7 @@
         <div class="rack-side left"></div>
         <div class="rack-side right"></div>
         <!-- preamps: flex-1 min-h-0 + overflow-y-auto so the list scrolls when devices don't fit -->
-        <div class="rack-devices flex-1 min-h-0 flex flex-col overflow-y-auto">
+        <div class="rack-devices flex-1 grow min-h-0 flex flex-col">
             <slot></slot>
         </div>
         <!-- footer -->

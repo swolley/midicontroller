@@ -6,7 +6,7 @@ import ConsoleDevice from "@/components/devices/ConsoleDevice.vue";
 import OutboardDevice from "@/components/devices/OutboardDevice.vue";
 import type Midi from "@/services/classes/Midi";
 import { Container, Draggable } from "vue-dndrop";
-import type RackConsole from "@/services/classes/RackConsole";
+import type RackConsole from "@/stores/useConsole";
 import type Outboard from "@/services/classes/Outboard";
 import { useWindowSize } from "@vueuse/core";
 import type { DropResult, DragResult } from "@/services/types/devices";
@@ -149,7 +149,7 @@ onMounted(() => {
                         <div class="h-full min-h-0 flex flex-col">
                             <OutboardsContainer class="flex-1 min-h-0" :showConsole="showConsole">
                                 <Container
-                                    class="min-h-0 flex flex-col"
+                                    class="rack-drop-zone flex flex-col flex-1 min-h-0"
                                     :get-child-payload="(index: number) => ({ list: 'rack', device: rackStore.rackDevices[index] })"
                                     :get-ghost-parent="getGhostParent"
                                     :fire-related-events-only="true"

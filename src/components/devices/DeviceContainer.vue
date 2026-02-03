@@ -61,7 +61,7 @@ function toggleCollapsed() {
     <div
         class="device"
         :class="{ collapsed: effectiveCollapsed }"
-        :style="{ 'background-color': background.toString(), 'box-shadow': selected ? '0px 10px 12px 6px' : '0px 1px 4px' }"
+        :style="{ 'background-color': background.toString(), 'box-shadow': selected ? '0px 10px 18px 4px' : '0px 1px 4px' }"
     >
         <Transition name="device-expand">
             <div
@@ -135,6 +135,10 @@ $expand-duration: 0.25s;
 
     &:not(.collapsed):hover label {
         @apply opacity-10;
+    }
+
+    &.collapsed {
+        @apply items-center;
     }
 }
 

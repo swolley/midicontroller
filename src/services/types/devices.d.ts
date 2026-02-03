@@ -1,4 +1,5 @@
 import type Outboard from "@/services/classes/Outboard";
+import type { Ref } from "vue";
 
 type PrependNextNum<A extends Array<unknown>> = A["length"] extends infer T ? (((t: T, ...a: A) => void) extends (...x: infer X) => void ? X : never) : never;
 type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A; 1: EnumerateInternal<PrependNextNum<A>, N> }[N extends A["length"] ? 0 : 1];
@@ -68,7 +69,7 @@ export interface IConsoleLog {
 }
 
 export interface IConsole {
-    logs: IConsoleLog[];
+    logs: Ref<IConsoleLog[]>;
 }
 
 export type LogType = "success" | "info" | "warn" | "error";

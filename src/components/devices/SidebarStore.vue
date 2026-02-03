@@ -86,7 +86,7 @@ function askRemoveDevice(device: Outboard) {
                 </button>
                 <Container
                     v-show="group.opened"
-                    class="grow relative"
+                    class="grow relative min-h-[160px] py-2 store-drop-zone"
                     group-name="devices"
                     orientation="vertical"
                     drag-class="dndrop-dragging-ghost"

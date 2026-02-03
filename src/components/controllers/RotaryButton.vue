@@ -154,9 +154,11 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .rotaryswitchPlugin {
-    @apply relative cursor-pointer shadow-md rounded-full active:cursor-ns-resize;
+    @apply relative cursor-pointer shadow-md rounded-full active:cursor-ns-resize flex-shrink-0;
     width: 51px;
     height: 51px;
+    min-width: 51px;
+    min-height: 51px;
     background-size: 51px;
     background-repeat: no-repeat;
     &.dark {
