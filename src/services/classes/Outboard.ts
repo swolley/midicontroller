@@ -1,4 +1,4 @@
-import type { ChannelRange, IDeviceConfig, RotaryStyle, IDeviceControllers, IControllerConfigs } from "@/services/types/devices";
+import type { ChannelRange, IDeviceConfig, IDeviceControllers, IControllerConfigs, VariableStyle } from "@/services/types/devices";
 import { ObjectUtils, Validators } from "@/services/classes/Utils";
 import Color from "@/services/classes/Color";
 // import { sealed, MyObjectListener, Listener } from "@/services/types/decorators";
@@ -17,7 +17,7 @@ export default class Outboard implements IDeviceConfig {
     private _borderSize = 0;
     private _hasMultiSelection = false;
     private _category: string;
-    private _style: RotaryStyle = "dark";
+    private _style: VariableStyle = "dark";
     private _logo?: string;
     private _controllers: IDeviceControllers;
     private _channel: ChannelRange = 1;
@@ -161,12 +161,12 @@ export default class Outboard implements IDeviceConfig {
         this._category = value !== undefined && value.length > 0 ? value : "uncategorized";
     }
 
-    get style(): RotaryStyle {
+    get style(): VariableStyle {
         return this._style;
     }
 
     /** the device's rotary style */
-    set style(value: RotaryStyle) {
+    set style(value: VariableStyle) {
         this.checkStock();
         this._style = value;
     }
@@ -175,10 +175,9 @@ export default class Outboard implements IDeviceConfig {
         return this._logo;
     }
 
-    /** the device's logo */
+    /** the device's logo (data URL e.g. data:image/png;base64,...). */
     set logo(value: string | undefined) {
         this.checkStock();
-        if (value && value.length) throw new Error(notValidError);
         this._logo = value;
     }
 

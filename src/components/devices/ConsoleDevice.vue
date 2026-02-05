@@ -1,21 +1,21 @@
 <script lang="ts" setup>
 import DeviceContainer from "./DeviceContainer.vue";
 import type { LedStatus, IConsoleLog } from "@/services/types/devices";
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import LightLed from "@/components/controllers/LightLed.vue";
-import type RackConsole from "@/stores/useConsole";
 import Color from "@/services/classes/Color";
 import { useWindowSize } from "@vueuse/core";
+import { useConsole } from "@/stores/useConsole";
 
 const props = defineProps<{
     collapsable: boolean;
     collapsed: boolean;
-    console: RackConsole;
 }>();
 
-const logs = reactive(props.console.logs);
+const console = useConsole();
+const logs = computed(() => console.logs);
 const ledStatus = ref<LedStatus>("off");
-let blinkTimeout: number | null = null;
+let blinkTimeout: NodeJS.Timeout | null = null;
 const currentlyCollapsed = ref<boolean>(props.collapsed);
 const consoleColor = Color.createFromHex("050505");
 const consoleDisplay = ref<HTMLDivElement | null>(null);
@@ -76,12 +76,13 @@ onMounted(() => {
         :collapsable="collapsable"
         :collapsed="currentlyCollapsed"
         display="horizontal"
+        :forceContentOnCollapse="true"
         @togglecollapse="currentlyCollapsed = !currentlyCollapsed"
     >
-        <div class="console-block">
+        <div class="console-block" :class="{ '!h-10': currentlyCollapsed }">
             <LightLed class="mt-2" :status="ledStatus" />
-            <div class="console-display border-3d table" ref="consoleDisplay">
-                <code class="table-row relative overflow-hidden" v-for="log in logs" :key="log.timestamp.getTime()">
+            <div class="console-display border-3d table" ef="consoleDisplay">
+                <code class="table-row relative overflow-hidden" v-for="log in logs" :key="log.id">
                     <div
                         class="absolute font-digital select-none cursor-default pointer-events-none text-off/40 text-nowrap w-full opacity-30"
                     >
@@ -101,7 +102,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .console-device {
     @apply mt-0;
-    min-height: 100px;
+    min-height: 70px;
     // max-height: 100px !important;
     max-height: 100px;
 

@@ -39,8 +39,8 @@ const patchSelector = ref<ILcdControllerConfigs | undefined>(currentDevice.contr
 const lastNote = ref<number | undefined>();
 const lastValue = ref<string | undefined>();
 
-let blinkTimeout: number | null = null;
-let displayTimeout: number | null = null;
+let blinkTimeout: NodeJS.Timeout | null = null;
+let displayTimeout: NodeJS.Timeout | null = null;
 const blinkDuration = 300;
 
 function changeInteface(output: Output | undefined) {
@@ -65,15 +65,28 @@ function handleDisplay(value: string, note?: number) {
 
 function dispatchToggle(controller: IMessageControllerConfigs, active: boolean) {
     handleDisplay(active ? "on" : "off", controller.note);
-    // console.log(currentDevice.channel);
+    const newValue = active ? controller.maxValue || 127 : controller.minValue || 0;
+    
     const sent = props.midi.send(
         props.midi.outputs[selectedInterface.value],
         currentDevice.channel,
         controller.message,
         controller.note,
-        active ? controller.maxValue || 127 : controller.minValue || 0,
+        newValue,
         currentDevice
     );
+
+    if (sent && controller.group) {
+        console.log("ORIGINAL", controller.label, controller.group, newValue);
+        
+        props.device.controllers.toggles.forEach((toggle) => {
+            if (active && toggle !== controller && toggle.group === controller.group) {
+                toggle.value = toggle.minValue || 0;
+                console.log("SAME GROUP", toggle.label, toggle.group, toggle.value);
+            }
+        });
+    }
+
     handleBlink(sent);
 }
 
@@ -144,7 +157,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                     </option>
                 </select>
                 <select class="btn border-3d text-xs uppercase h-6" :class="{ invert: outPanel.isFgInverted }" title="Set Midi channel">
-                    <option v-for="channel in midiChannels" :key="channel" :value="channel" class="text-right">
+                    <option v-for="channel in midiChannels" :key="channel" :value="channel">
                         {{ "Channel " + ("0" + channel).substr(-2) }}
                     </option>
                 </select>
@@ -195,6 +208,7 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                             :label="toggle.label"
                             :invert="overPanel.isFgInverted"
                             :data-controller="toggle.label"
+                            :active="toggle.value === (toggle.maxValue || 127)"
                         />
                     </div>
                     <div class="flex flex-wrap gap-3 items-start" v-if="rotaries.length">

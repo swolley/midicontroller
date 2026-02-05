@@ -6,7 +6,6 @@ import ConsoleDevice from "@/components/devices/ConsoleDevice.vue";
 import OutboardDevice from "@/components/devices/OutboardDevice.vue";
 import type Midi from "@/services/classes/Midi";
 import { Container, Draggable } from "vue-dndrop";
-import type RackConsole from "@/stores/useConsole";
 import type Outboard from "@/services/classes/Outboard";
 import { useWindowSize } from "@vueuse/core";
 import type { DropResult, DragResult } from "@/services/types/devices";
@@ -183,7 +182,6 @@ onMounted(() => {
                                 <template v-slot:footer v-if="rackStore.console && isDesktop">
                                     <ConsoleDevice
                                         v-show="showConsole && rackStore.console"
-                                        :console="(rackStore.console as RackConsole)"
                                         :collapsable="true"
                                         :collapsed="collapseAll"
                                     />

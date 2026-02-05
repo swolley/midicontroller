@@ -16,11 +16,13 @@ const props = withDefaults(
         selected?: boolean;
         display?: "vertical" | "horizontal";
         label?: string;
+        forceContentOnCollapse?: boolean;
     }>(),
     {
         display: "vertical",
         draggable: false,
         selected: false,
+        forceContentOnCollapse: false,
     }
 );
 
@@ -97,7 +99,7 @@ function toggleCollapsed() {
                 </Transition>
             </div>
             <Transition name="device-expand" class="device-expand-content">
-                <div v-if="!effectiveCollapsed" class="flex grow relative h-full mx-auto w-full lg:w-11/12">
+                <div v-if="!effectiveCollapsed || forceContentOnCollapse" class="flex grow relative h-full mx-auto w-full lg:w-11/12">
                     <!-- device controllers -->
                     <slot></slot>
                 </div>

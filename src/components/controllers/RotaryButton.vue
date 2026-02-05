@@ -39,8 +39,8 @@ let direction = 0;
 let movement = 0;
 let isChanging = false;
 
-let changeTimeout: number | null = null;
-let wheelEmitTimeout: number | null = null;
+let changeTimeout: NodeJS.Timeout | null = null;
+let wheelEmitTimeout: NodeJS.Timeout | null = null;
 
 function onMouseWheel(e: WheelEvent) {
     e.preventDefault();
@@ -51,7 +51,7 @@ function onMouseWheel(e: WheelEvent) {
     }
     // Debounce: emit MIDI when user stops scrolling the wheel
     if (wheelEmitTimeout) clearTimeout(wheelEmitTimeout);
-    wheelEmitTimeout = window.setTimeout(() => {
+    wheelEmitTimeout = setTimeout(() => {
         emit("changevalue", currentValue.value);
         wheelEmitTimeout = null;
     }, 500);

@@ -10,7 +10,7 @@ import TrashIcon from "../icons/TrashIcon.vue";
 import PlusIcon from "../icons/PlusIcon.vue";
 import PaletteIcon from "../icons/PaletteIcon.vue";
 import { useRack } from "@/stores/useRack";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type Outboard from "@/services/classes/Outboard";
 import ConfirmDialog from "@/components/modals/ConfirmDialog.vue";
 import AngleDownIcon from "../icons/AngleDownIcon.vue";
@@ -28,14 +28,26 @@ rackStore.init();
 
 const currentRemoveDeviceCb = ref<CallableFunction | null>(null);
 
-const remapped: SidebarDevices = {};
-for (const group in rackStore.availableDevices) {
-    remapped[group] = { opened: false, devices: rackStore.availableDevices[group] };
-}
-const keys = Object.keys(remapped);
-if (keys.length === 1) remapped[keys[0]].opened = true;
+/** Local open/closed state per category (so it survives store updates). */
+const openedGroups = ref<Record<string, boolean>>({});
 
-const groupedDevices = ref<SidebarDevices>(remapped);
+const groupedDevices = computed<SidebarDevices>(() => {
+    const remapped: SidebarDevices = {};
+    const groups = rackStore.availableDevices;
+    const keys = Object.keys(groups);
+    keys.forEach((name) => {
+        remapped[name] = {
+            opened: openedGroups.value[name] ?? keys.length === 1,
+            devices: groups[name],
+        };
+    });
+    return remapped;
+});
+
+function toggleGroup(name: string) {
+    const current = groupedDevices.value[name]?.opened ?? false;
+    openedGroups.value = { ...openedGroups.value, [name]: !current };
+}
 
 function getGhostParent() {
     return document.body;
@@ -79,7 +91,7 @@ function askRemoveDevice(device: Outboard) {
                 <PlusIcon class="text-gray-100 text-xl" />
             </button>
             <div v-for="(group, name) in (groupedDevices as SidebarDevices)" :key="name">
-                <button class="flex w-full text-gray-500 items-center px-1 cursor-pointer" @click="group.opened = !group.opened">
+                <button class="flex w-full text-gray-500 items-center px-1 cursor-pointer" @click="toggleGroup(name)">
                     <div class="grow select-none text-left">{{ StringUtils.ucFirst(name) }} ({{ groupedDevices[name].devices.length }})</div>
                     <AngleDownIcon v-if="group.opened" />
                     <AngleUpIcon v-else />

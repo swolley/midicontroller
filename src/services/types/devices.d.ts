@@ -22,7 +22,7 @@ export interface IDeviceConfig {
     panelColor?: string | Color;
     borderColor?: string | Color;
     borderSize?: number;
-    style?: RotaryStyle;
+    style?: VariableStyle;
     stock: boolean;
     category?: string;
     controllers: IDeviceControllers;
@@ -34,6 +34,8 @@ export type ControllerType = "LCD" | "TOGGLE" | "ROTARY";
 export type MessageType = "controlchange" | "programchange" | "noteon" | /*"noteoff" |*/ "sysex";
 
 export type RotaryStyle = "light" | "dark" | "metal";
+
+export type VariableStyle = RotaryStyle | "step";
 
 interface IControllerConfigs {
     note?: number; //NoteRange;
@@ -63,6 +65,7 @@ export interface IEditor {
 }
 
 export interface IConsoleLog {
+    id: string;
     type: LogType;
     message: string;
     timestamp: Date;

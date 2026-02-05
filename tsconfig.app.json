@@ -1,5 +1,5 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "extends": "./tsconfig.json",
   "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "config", "cypress.d.ts"],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
@@ -9,6 +9,18 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "lib": ["es2017", "dom", "dom.iterable"]
+    "lib": ["es2017", "dom", "dom.iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "strict": true,
+    "noImplicitThis": true,
+    "verbatimModuleSyntax": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "useDefineForClassFields": true
   }
 }

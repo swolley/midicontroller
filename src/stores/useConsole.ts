@@ -27,11 +27,12 @@ export const useConsole = defineStore("console", (): IConsole => {
     function log(type: LogType, contents: unknown[]) {
         const slicedLogs = [...logs.value.slice(0, 19)];
         slicedLogs.unshift({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             type: type,
             timestamp: new Date(),
             message: contents.map((text) => (typeof text === "object" ? JSON.stringify(text) : text)).join(" "),
         });
-    
+
         logs.value = slicedLogs;
     }
 

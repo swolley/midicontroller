@@ -21,8 +21,17 @@ export interface IAppStoreActions {
     moveDeviceToRack: (device: Outboard, toIdx: number) => void;
     reorderCategoryDevices: (device: Outboard, fromIdx: number, toIdx: number, fromCategory?: "rack" | keyof CategorizedDeviceList) => void;
     reorderRackDevices: (device: Outboard, fromIdx: number, toIdx: number) => void;
-    moveDeviceToCategory: (device: Outboard, toCategory: keyof CategorizedDeviceList, toIdx: number, fromCategory?: "rack" | keyof CategorizedDeviceList) => void;
+    moveDeviceToCategory: (
+        device: Outboard,
+        toCategory: keyof CategorizedDeviceList,
+        toIdx: number,
+        fromCategory?: "rack" | keyof CategorizedDeviceList
+    ) => void;
     moveDeviceBackToStore: (device: Outboard) => void;
     removeDevice: (device: Outboard) => void;
     createNewDevice: () => Outboard;
+    updateDevice: (modified: Outboard) => void;
+    addDeviceToRack: (device: Outboard) => void;
+    addDeviceToStore: (device: Outboard, category?: keyof CategorizedDeviceList) => void;
+    reset: () => Promise<boolean>;
 }

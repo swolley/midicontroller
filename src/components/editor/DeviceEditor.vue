@@ -8,20 +8,20 @@ import IconClose from "@/components/icons/CancelIcon.vue";
 import DragIcon from "@/components/icons/DragIcon.vue";
 import PlusIcon from "@/components/icons/PlusIcon.vue";
 import TrashIcon from "@/components/icons/TrashIcon.vue";
-import { reactive, ref } from "vue";
-import { useRack } from "@/stores/useRack";
+import { ref } from "vue";
 import type Outboard from "@/services/classes/Outboard";
 
 const props = defineProps<{
     device: Outboard;
 }>();
 
-const deviceStore = useRack();
 const backgroundInput = ref<HTMLInputElement>();
 const panelInput = ref<HTMLInputElement>();
 const borderInput = ref<HTMLInputElement>();
+const logoInput = ref<HTMLInputElement>();
 
-const editingDevice = reactive<Outboard>(props.device);
+/** Same reference as props.device so mutations are visible to the parent (HomeView). */
+const editingDevice = props.device;
 
 function onDrop(dropResult: DropResult, list: "rotaries" | "toggles" | "lcds") {
     // let result = applyDrag(groupIndex === "rack" ? props.rackDevices : props.availableDevices, dropResult);
@@ -39,16 +39,19 @@ function createController(type: "rotaries" | "toggles" | "lcds") {
     switch (type) {
         case "rotaries":
             (newController as IMessageControllerConfigs).type = "ROTARY";
+            (newController as IMessageControllerConfigs).message = "controlchange";
             (newController as IMessageControllerConfigs).label = "rotary-" + (editingDevice.controllers.rotaries.length + 1);
             editingDevice.addController(newController as IMessageControllerConfigs);
             break;
-        case "toggles":
+            case "toggles":
             (newController as IMessageControllerConfigs).type = "TOGGLE";
+            (newController as IMessageControllerConfigs).message = "controlchange";
             (newController as IMessageControllerConfigs).label = "toggle-" + (editingDevice.controllers.toggles.length + 1);
             editingDevice.addController(newController as IMessageControllerConfigs);
             break;
-        case "lcds":
+            case "lcds":
             (newController as ILcdControllerConfigs).type = "LCD";
+            (newController as IMessageControllerConfigs).message = "programchange";
             (newController as IMessageControllerConfigs).label = "lcd-" + (editingDevice.controllers.lcds.length + 1);
             editingDevice.addController(newController as ILcdControllerConfigs);
             break;
@@ -75,6 +78,21 @@ function setBorderColor(event: Event, forcedValue?: string) {
 
 function setLabel(e: Event) {
     (editingDevice as Outboard).label = (editingDevice as Outboard, (e.target as HTMLInputElement).value);
+}
+
+function setLogo(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            (editingDevice as Outboard).logo = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function clearLogo() {
+    (editingDevice as Outboard).logo = undefined;
 }
 </script>
 
@@ -156,6 +174,50 @@ function setLabel(e: Event) {
                     </div>
                 </div>
             </div>
+            <div class="flex gap-2 px-2 ml-5 mt-2 items-end">
+                <div class="flex flex-col grow">
+                    <label for="deviceLogo" class="form-label">logo</label>
+                    <input
+                    ref="logoInput"
+                        id="deviceLogo"
+                        type="file"
+                        name="deviceLogo"
+                        class="hidden"
+                        accept=".png, .jpg, .jpeg, .gif, .svg"
+                        @change="setLogo"
+                    />
+                    <div class="form-top-input flex items-center gap-2 min-h-[2.5rem]">
+                        <button
+                            type="button"
+                            class="rounded border border-white/20 px-2 py-1 text-sm text-white/80 hover:bg-white/10"
+                            @click="logoInput?.click()"
+                        >
+                            Choose image
+                        </button>
+                        <template v-if="device.logo">
+                            <img
+                                :src="device.logo"
+                                alt="Logo preview"
+                                class="max-h-12 max-w-[140px] object-contain bg-white/5 rounded border border-white/10"
+                            />
+                            <IconClose
+                                class="text-2xl p-1 cursor-pointer shrink-0"
+                                aria-label="Remove logo"
+                                @click="clearLogo"
+                            />
+                        </template>
+                        <span v-else class="text-white/40 text-sm">No image</span>
+                    </div>
+                </div>
+                <div class="flex flex-col grow">
+                    <label for="style" class="form-label">style</label>
+                    <select name="style" class="form-select" v-model="device.style">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="metal">Metal</option>
+                    </select>
+                </div>
+            </div>
             <hr class="h-px my-2 ml-7 mr-2 border-white/10" />
         </div>
         <div class="gap-2">
@@ -184,7 +246,8 @@ function setLabel(e: Event) {
                                 <!-- <label for="type" class="form-label">type</label> -->
                                 <div class="flex items-center form-select">
                                     <div class="w-5">
-                                        <RotaryIcon v-if="controller.type === 'ROTARY'" :pot-style="device.style" />
+                                        <StepIcon v-if="device.style === 'step'" />
+                                        <RotaryIcon v-else-if="controller.type === 'ROTARY'" :pot-style="device.style" />
                                         <LightLed v-else-if="controller.type === 'TOGGLE'" status="off" />
                                         <LcdIcon v-else-if="controller.type === 'LCD'" :invert="false" />
                                     </div>

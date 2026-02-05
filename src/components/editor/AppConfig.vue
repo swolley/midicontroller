@@ -27,13 +27,10 @@ function toggleActiveHttp(id: string) {
     }
 }
 
-function handleResetAll() {
-    if (confirm("Would you like to reset all settings?")) {
-        rackStore.$reset();
-        rackStore.init();
-        emit("forceclose");
-        // openSettings.value = false;
-    }
+async function handleResetAll() {
+    if (!confirm("Would you like to reset all settings?")) return;
+    await rackStore.reset();
+    emit("forceclose");
 }
 </script>
 

@@ -6,10 +6,16 @@ import ControllerLabel from "./ControllerLabel.vue";
 const emit = defineEmits<{
     (event: "changevalue", value: boolean): void;
 }>();
-defineProps<{ label?: string; invert?: boolean }>();
-const active = ref<boolean>(false);
 
-let changeTimeout: number | null = null;
+const props = defineProps<{ 
+    label?: string; 
+    invert?: boolean; 
+    active?: boolean
+ }>();
+
+const active = ref<boolean>(props.active || false);
+
+let changeTimeout: NodeJS.Timeout | null = null;
 let initialValue = active.value;
 let newTimeoutValue = active.value;
 

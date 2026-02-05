@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import RackContainer from "@/components/rack/RackContainer.vue";
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { useRack } from "@/stores/useRack";
 import ModalPanel from "@/components/modals/ModalPanel.vue";
 import SidebarStore from "@/components/devices/SidebarStore.vue";
@@ -41,18 +41,31 @@ function cloneDevice(device: Outboard) {
 
 function toggleEditor(device?: Outboard, askConfirm = false) {
     if (device) {
-        modifiedDevice.value = cloneDevice(device);
-    } else if (askConfirm && confirm("Do you want to cancel this device edting?")) {
+        modifiedDevice.value = reactive(cloneDevice(device)) as Outboard;
+    } else if (askConfirm && confirm("Do you want to cancel editing this device?")) {
         modifiedDevice.value = undefined;
     }
     openEditor.value = device !== undefined;
 }
 
 function saveAndCloseEditor() {
-    if (modifiedDevice.value) {
-        modifiedDevice.value = undefined;
-        openEditor.value = false;
+    if (!modifiedDevice.value) return;
+    const source = modifiedDevice.value;
+    const payload = source.toJSON();
+    const device = new Outboard(payload);
+    if (rackStore.rackDevice(device.id) ?? rackStore.storeDevice(device.id)) {
+        rackStore.updateDevice(device);
+    } else {
+        rackStore.addDeviceToStore(device);
     }
+    modifiedDevice.value = undefined;
+    openEditor.value = false;
+}
+
+function copyConfiguration() {
+    if (!modifiedDevice.value) return;
+
+    window.navigator.clipboard.writeText(JSON.stringify(modifiedDevice.value.toJSON()));
 }
 
 function createDevice() {
@@ -102,6 +115,12 @@ function createDevice() {
                             @click="toggleEditor(undefined, true)"
                         >
                             Cancel
+                        </button>
+                        <button
+                            class="rounded border border-white/10 w-full p-2 shadow bg-white/10 hover:bg-white/20 text-white transition-colors"
+                            @click="copyConfiguration()"
+                        >
+                            Copy configuration
                         </button>
                         <button
                             class="rounded border border-white/10 w-full p-2 shadow bg-white/10 hover:bg-white/20 text-white transition-colors"
