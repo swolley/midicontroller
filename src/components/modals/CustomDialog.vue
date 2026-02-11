@@ -25,7 +25,7 @@ function handleClick(callback?: CallableFunction) {
 
 <template>
     <Teleport to="body">
-        <ModalPanel :show="true">
+        <ModalPanel :show="true" :style="'z-index: 9999;'">
             <template #header v-if="close">
                 <div class="flex w-full">
                     <div class="grow">

@@ -12,6 +12,7 @@ import ToggleButton from "@/components/controllers/ToggleButton.vue";
 import LcdDisplay from "@/components/controllers/LcdDisplay.vue";
 import LcdSwitch from "@/components/controllers/LcdSwitch.vue";
 import RotaryButton from "@/components/controllers/RotaryButton.vue";
+import StepButton from "@/components/controllers/StepButton.vue";
 import PaletteIcon from "@/components/icons/PaletteIcon.vue";
 import type Outboard from "@/services/classes/Outboard";
 import TrashIcon from "@/components/icons/TrashIcon.vue";
@@ -212,15 +213,22 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                         />
                     </div>
                     <div class="flex flex-wrap gap-3 items-start" v-if="rotaries.length">
-                        <RotaryButton
-                            class="w-16"
-                            v-for="(rotary, idx) in rotaries"
-                            :key="idx"
-                            :controller="rotary"
-                            :invert="overPanel.isFgInverted"
-                            :style="device.style || 'dark'"
-                            @changevalue="(value: number) => dispatchCCMessage(rotary, value)"
-                        />
+                        <template v-for="(rotary, idx) in rotaries" :key="idx">
+                            <StepButton
+                                v-if="rotary.type === 'STEP'"
+                                class="w-16"
+                                :controller="rotary"
+                                :invert="overPanel.isFgInverted"
+                            />
+                            <RotaryButton
+                                v-else
+                                class="w-16"
+                                :controller="rotary"
+                                :invert="overPanel.isFgInverted"
+                                :style="device.style || 'dark'"
+                                @changevalue="(value: number) => dispatchCCMessage(rotary, value)"
+                            />
+                        </template>
                     </div>
                 </div>
             </div>

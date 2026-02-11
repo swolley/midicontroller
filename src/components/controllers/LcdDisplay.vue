@@ -7,6 +7,7 @@ const props = defineProps<{
     invert: boolean;
     value?: string;
     note?: number;
+    minimal?: boolean;
 }>();
 const currentValue = computed(() => formatValueOutput(props.value || ""));
 const currentNote = computed(() => formatNoteOutput(props.note || ""));
@@ -23,11 +24,23 @@ function formatNoteOutput(value: number | "") {
 
 <template>
     <div class="flex flex-col items-center">
-        <div class="flex items-center flex-row justify-center border-3d px-1 w-20 relative" :class="invert ? 'invert bg-white' : 'bg-black'">
+        <div class="flex items-center flex-row justify-center border-3d px-1 relative" :class="[invert ? 'invert bg-white' : 'bg-black', minimal ? 'w-12' : 'w-20']">
             <div class="w-12 relative">
+                <!-- LCD backlight: same padding as input so rects align with digits; width = 1ch per digit -->
                 <div
-                    class="absolute w-12 font-digital text-2xl select-none cursor-default pointer-events-none bg-black/0 text-off/40 text-center mt-1"
-                    :class="{ invert: invert }"
+                    class="lcd-backlight"
+                    :class="{ invert: invert, 'mt-1': !minimal, 'pr-[9px]': minimal, 'pt-[3px] pr-[9px] pb-[3px] pl-[1px]': !minimal }"
+                    aria-hidden="true"
+                >
+                    <!-- Invisible "0" forces font load so 1ch is valid; backlight rects use 1ch width -->
+                    <span class="absolute opacity-0 pointer-events-none select-none">0</span>
+                    <div class="w-[calc(1ch-1.5px)] min-w-[0.2rem] min-h-[1.75rem] shrink-0 rounded-sm bg-red-500/20" />
+                    <div class="w-[calc(1ch-1.5px)] min-w-[0.2rem] min-h-[1.75rem] shrink-0 rounded-sm bg-red-500/20" />
+                    <div class="w-[calc(1ch-1.5px)] min-w-[0.2rem] min-h-[1.75rem] shrink-0 rounded-sm bg-red-500/20" />
+                </div>
+                <div
+                    class="absolute w-12 font-digital text-2xl select-none cursor-default pointer-events-none text-off/40 text-center z-10"
+                    :class="{ invert: invert, 'mt-1': !minimal }"
                 >
                     888
                 </div>
@@ -36,11 +49,11 @@ function formatNoteOutput(value: number | "") {
                     v-model="currentValue"
                     readonly
                     maxlength="3"
-                    class="font-digital w-12 text-2xl m-1 pr-3 select-none cursor-default pointer-events-none bg-black/0 text-on z-10 text-right"
-                    :class="invert ? 'invert bg-black/0' : ''"
+                    class="font-digital w-12 text-2xl select-none cursor-default pointer-events-none bg-black/0 text-on z-20 text-right"
+                    :class="[invert ? 'invert bg-black/0' : '', minimal ? 'pr-2' : 'm-1']"
                 />
             </div>
-            <div class="absolute top-0 right-0">
+            <div class="absolute top-0 right-0" v-if="!minimal">
                 <small class="absolute right-0 mr-1 font-digital text-off/40" :class="{ invert: invert }">888</small>
                 <small class="absolute right-0 mr-1 font-digital text-on z-10" :class="{ invert: invert }">{{ currentNote }}</small>
             </div>
@@ -49,5 +62,8 @@ function formatNoteOutput(value: number | "") {
     </div>
 </template>
 
-<style scoped lang="scss"></style>
-0
+<style scoped lang="scss">
+.lcd-backlight {
+    @apply absolute inset-0 w-12 min-h-[1.75rem] flex gap-[1px] justify-end items-stretch font-digital text-2xl z-0 pointer-events-none text-transparent box-border
+}
+</style>

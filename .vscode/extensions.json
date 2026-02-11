@@ -4,7 +4,6 @@
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "vue.vscode-typescript-vue-plugin",
-        "vue.volar",
-        "zixuanchen.vitest-explorer",
+        "vue.volar"
     ]
 }

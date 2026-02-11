@@ -3,6 +3,7 @@ import RackContainer from "@/components/rack/RackContainer.vue";
 import { computed, reactive, ref } from "vue";
 import { useRack } from "@/stores/useRack";
 import ModalPanel from "@/components/modals/ModalPanel.vue";
+import ConfirmDialog from "@/components/modals/ConfirmDialog.vue";
 import SidebarStore from "@/components/devices/SidebarStore.vue";
 import DeviceEditor from "@/components/editor/DeviceEditor.vue";
 import AppConfig from "@/components/editor/AppConfig.vue";
@@ -19,6 +20,7 @@ const showStore = ref<boolean>(false);
 const modifiedDevice = ref<Outboard | undefined>();
 const openSettings = ref<boolean>(false);
 const openEditor = ref<boolean>(false);
+const showCancelConfirm = ref(false);
 const rackcontainerel = ref();
 const { lengthX, direction } = useSwipe(rackcontainerel, {
     passive: false,
@@ -42,10 +44,23 @@ function cloneDevice(device: Outboard) {
 function toggleEditor(device?: Outboard, askConfirm = false) {
     if (device) {
         modifiedDevice.value = reactive(cloneDevice(device)) as Outboard;
-    } else if (askConfirm && confirm("Do you want to cancel editing this device?")) {
+    } else if (askConfirm) {
+        showCancelConfirm.value = true;
+        return;
+    } else {
         modifiedDevice.value = undefined;
     }
     openEditor.value = device !== undefined;
+}
+
+function onCancelEditorYes() {
+    showCancelConfirm.value = false;
+    modifiedDevice.value = undefined;
+    openEditor.value = false;
+}
+
+function onCancelEditorNo() {
+    showCancelConfirm.value = false;
 }
 
 function saveAndCloseEditor() {
@@ -104,7 +119,13 @@ function createDevice() {
         />
 
         <Teleport to="body">
-            <ModalPanel v-if="modifiedDevice && openEditor" :show="modifiedDevice && openEditor">
+            <ModalPanel
+                v-if="modifiedDevice && openEditor"
+                :show="!!(modifiedDevice && openEditor)"
+                :confirm-close="true"
+                confirm-close-message="Changes will be discarded. Do you want to continue?"
+                @close="() => { modifiedDevice = undefined; openEditor = false; }"
+            >
                 <template v-slot:body>
                     <DeviceEditor :device="modifiedDevice" class="px-5" />
                 </template>
@@ -112,7 +133,7 @@ function createDevice() {
                     <div class="flex flex-col md:flex-row grow gap-2">
                         <button
                             class="rounded border border-white/10 w-full p-2 shadow bg-white/10 hover:bg-white/20 text-white transition-colors"
-                            @click="toggleEditor(undefined, true)"
+                            @click="showCancelConfirm = true"
                         >
                             Cancel
                         </button>
@@ -131,6 +152,14 @@ function createDevice() {
                     </div>
                 </template>
             </ModalPanel>
+
+            <ConfirmDialog
+                v-if="showCancelConfirm"
+                message="Do you want to cancel editing this device?"
+                :yes-callback="onCancelEditorYes"
+                :no-callback="onCancelEditorNo"
+                @close="showCancelConfirm = false"
+            />
 
             <ModalPanel v-if="openSettings" :show="openSettings" @close="() => (openSettings = false)">
                 <template v-slot:body>

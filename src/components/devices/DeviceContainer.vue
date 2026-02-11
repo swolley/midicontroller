@@ -31,6 +31,8 @@ const currentlyCollapsed = ref<boolean>(props.collapsed);
 /** When "collapse all" is active, true means this device was individually expanded by the user. */
 const individuallyExpanded = ref<boolean>(false);
 const invert = ref<boolean>(isFgInverted);
+const translateTop = Math.random() * 2 * (Math.random() ? 1 : -1);
+const translateBottom = Math.random() * 2 * (Math.random() ? 1 : -1);
 
 const effectiveCollapsed = computed(() =>
     props.collapsed ? !individuallyExpanded.value : currentlyCollapsed.value
@@ -63,7 +65,7 @@ function toggleCollapsed() {
     <div
         class="device"
         :class="{ collapsed: effectiveCollapsed }"
-        :style="{ 'background-color': background.toString(), 'box-shadow': selected ? '0px 10px 18px 4px' : '0px 1px 4px' }"
+        :style="[{ 'background-color': background.toString(), 'box-shadow': selected ? '0px 10px 18px 4px' : '0px 1px 4px', 'margin-top': `calc(0.25rem - ${translateTop}px)`, 'margin-bottom': `calc(0.25rem - ${translateBottom}px)` }]"
     >
         <Transition name="device-expand">
             <div
@@ -125,7 +127,7 @@ function toggleCollapsed() {
 $expand-duration: 0.25s;
 
 .device {
-    @apply rounded-sm my-1 mx-0.5 py-2 overflow-hidden select-none flex;
+    @apply rounded-sm mx-0.5 py-2 overflow-hidden select-none flex;
     background-image: url(/metal.jpg);
     background-blend-mode: soft-light;
     min-height: 80px;

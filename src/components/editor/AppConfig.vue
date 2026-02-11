@@ -2,10 +2,13 @@
 import { useRack } from "@/stores/useRack";
 import PlusIconVue from "@/components/icons/PlusIcon.vue";
 import TrashIcon from "@/components/icons/TrashIcon.vue";
+import ConfirmDialog from "@/components/modals/ConfirmDialog.vue";
+import { ref } from "vue";
 
 const emit = defineEmits(["forceclose"]);
 
 const rackStore = useRack();
+const showResetConfirm = ref(false);
 
 function toggleActiveMidi(id: string) {
     if (!rackStore.midi) return;
@@ -27,10 +30,18 @@ function toggleActiveHttp(id: string) {
     }
 }
 
-async function handleResetAll() {
-    if (!confirm("Would you like to reset all settings?")) return;
+function handleResetAll() {
+    showResetConfirm.value = true;
+}
+
+async function onResetConfirmYes() {
+    showResetConfirm.value = false;
     await rackStore.reset();
     emit("forceclose");
+}
+
+function onResetConfirmNo() {
+    showResetConfirm.value = false;
 }
 </script>
 
@@ -88,6 +99,16 @@ async function handleResetAll() {
         >
             Reset all settings
         </button>
+
+        <Teleport to="body">
+            <ConfirmDialog
+                v-if="showResetConfirm"
+                message="Would you like to reset all settings?"
+                :yes-callback="onResetConfirmYes"
+                :no-callback="onResetConfirmNo"
+                @close="showResetConfirm = false"
+            />
+        </Teleport>
     </div>
 </template>
 

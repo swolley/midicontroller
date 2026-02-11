@@ -3,11 +3,11 @@ import { useConsole } from "@/stores/useConsole";
 import type { IDeviceConfig } from "@/services/types/devices";
 import type { CategorizedDeviceList, IAppStoreProps, IAppStoreActions } from "@/services/types/stores";
 import { defineStore, type StateTree } from "pinia";
-import type { Output } from "webmidi";
 import outboards from "../../config/outboard";
 import Outboard from "@/services/classes/Outboard";
 import { computed, ref } from "vue";
 import { Http } from "@/services/classes/Http";
+import type { Output } from "webmidi";
 
 const consoleColor = ["%cRackStore", "color: #437bad"];
 
@@ -15,7 +15,7 @@ export const useRack = defineStore(
     "rack",
     (): IAppStoreProps & IAppStoreActions => {
         const rackDevices = ref<Outboard[]>([]);
-        const availableDevices = ref<Record<string, Outboard[]>>({});
+        const availableDevices = ref<CategorizedDeviceList>({});
         const console = useConsole();
         const editor = ref<Outboard | undefined>(undefined);
         const midi = ref<Midi | undefined>(undefined);
@@ -94,29 +94,32 @@ export const useRack = defineStore(
 
         async function init() {
             try {
-                if (!Object.keys(availableDevices.value).length) {
-                    const groups: Record<string, Outboard[]> = {};
-                    const sorted = outboards.sort((a: IDeviceConfig, b: IDeviceConfig) =>
-                        (a.category || "uncategozized") < (b.category || "uncategozized") && a.label < b.label ? 1 : -1
-                    );
+                const groups: CategorizedDeviceList = {};
+                const sorted = outboards.sort((a: IDeviceConfig, b: IDeviceConfig) =>
+                    (a.category || "uncategozized") < (b.category || "uncategozized") && a.label < b.label ? 1 : -1
+                );
 
-                    sorted.forEach((device) => {
-                        if (!device.category) device.category = "uncategorized";
-                        const outboard = new Outboard(device);
-                        if (!((device.category as string) in groups)) {
-                            groups[device.category] = [outboard];
+                sorted.forEach((curDevice) => {
+                    if (!curDevice.category) curDevice.category = "uncategorized";
+                    const found = device(curDevice.id);
+                    if (found) {
+                        found.update(curDevice);
+                    } else {
+                        const outboard = new Outboard(curDevice);
+                        if (!((curDevice.category as string) in groups)) {
+                            groups[curDevice.category as keyof CategorizedDeviceList] = [outboard];
                         } else {
-                            groups[device.category].push(outboard);
+                            groups[curDevice.category as keyof CategorizedDeviceList].push(outboard);
                         }
-                    });
+                    }
+                });
 
-                    availableDevices.value = groups;
+                availableDevices.value = groups;
 
-                    logInitFinished(
-                        Object.values(availableDevices.value).reduce((sum, category) => sum + category.length, 0),
-                        Object.keys(availableDevices.value).length
-                    );
-                }
+                logInitFinished(
+                    Object.values(availableDevices.value).reduce((sum, category) => sum + category.length, 0),
+                    Object.keys(availableDevices.value).length
+                );
 
                 midi.value = await Midi.init();
                 // http.value = await Http.init();

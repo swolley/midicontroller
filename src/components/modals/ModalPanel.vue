@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
+import ConfirmDialog from "./ConfirmDialog.vue";
 
-const props = defineProps<{ show: boolean; confirmClose?: boolean }>();
+const props = withDefaults(
+    defineProps<{ show: boolean; confirmClose?: boolean; confirmCloseMessage?: string; style?: string }>(),
+    { confirmCloseMessage: "Changes will be discarded. Do you want to continue?" }
+);
 
 const emit = defineEmits(["close"]);
+
+const showConfirmDialog = ref(false);
 
 onMounted(() => {
     document.addEventListener("keyup", handleClose);
@@ -11,17 +17,29 @@ onMounted(() => {
 
 function handleClose(e: Event) {
     if (e.type !== "click" && e.type === "keyup" && (e as KeyboardEvent).key !== "Escape") return;
-    if (props.confirmClose ? confirm("Changes will be discarded. Do you want to continue?") : true) {
-        emit("close");
-        document.removeEventListener("keyup", handleClose);
+    if (props.confirmClose) {
+        showConfirmDialog.value = true;
+        return;
     }
+    emit("close");
+    document.removeEventListener("keyup", handleClose);
+}
+
+function onConfirmYes() {
+    showConfirmDialog.value = false;
+    document.removeEventListener("keyup", handleClose);
+    emit("close");
+}
+
+function onConfirmNo() {
+    showConfirmDialog.value = false;
 }
 </script>
 <template>
     <Transition name="modal" :duration="350">
         <div v-if="show" class="modal-mask">
             <Transition name="modal-slide" appear>
-                <div class="modal-wrapper backdrop-blur-sm" @click="$emit('close')">
+                <div class="modal-wrapper backdrop-blur-sm" v-bind:style="style" @click="handleClose">
                     <div
                         class="modal-content mx-auto p-4 bg-gray-900/75 border-2 border-white/30 rounded shadow-lg overflow-hidden max-h-screen w-full md:max-w-4xl"
                         @click.stop
@@ -49,6 +67,17 @@ function handleClose(e: Event) {
             </Transition>
         </div>
     </Transition>
+
+    <Teleport to="body">
+        <ConfirmDialog
+            v-if="showConfirmDialog"
+            :message="confirmCloseMessage"
+            :yes-callback="onConfirmYes"
+            :no-callback="onConfirmNo"
+            :cancel-callback="onConfirmNo"
+            @close="showConfirmDialog = false"
+        />
+    </Teleport>
 </template>
 
 <style scoped>

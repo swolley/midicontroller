@@ -9,6 +9,12 @@ type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enum
 export type ChannelRange = Range<1, 17>;
 // type NoteRange = Range<0, 128>;
 
+export type ControllerType = "LCD" | "TOGGLE" | "ROTARY" | "STEP";
+
+export type MessageType = "controlchange" | "programchange" | "noteon" | /*"noteoff" |*/ "sysex";
+
+export type RotaryStyle = "light" | "dark" | "metal";
+
 export interface IDeviceControllers {
     lcds: ILcdControllerConfigs[];
     toggles: IMessageControllerConfigs[];
@@ -22,20 +28,12 @@ export interface IDeviceConfig {
     panelColor?: string | Color;
     borderColor?: string | Color;
     borderSize?: number;
-    style?: VariableStyle;
+    style?: RotaryStyle;
     stock: boolean;
     category?: string;
     controllers: IDeviceControllers;
     logo?: string;
 }
-
-export type ControllerType = "LCD" | "TOGGLE" | "ROTARY";
-
-export type MessageType = "controlchange" | "programchange" | "noteon" | /*"noteoff" |*/ "sysex";
-
-export type RotaryStyle = "light" | "dark" | "metal";
-
-export type VariableStyle = RotaryStyle | "step";
 
 interface IControllerConfigs {
     note?: number; //NoteRange;
@@ -54,7 +52,7 @@ export interface ILcdControllerConfigs extends IControllerConfigs {
 }
 
 export interface IMessageControllerConfigs extends IControllerConfigs {
-    type: "TOGGLE" | "ROTARY";
+    type: "TOGGLE" | "ROTARY" | "STEP";
     minValue?: number; //NoteRange;
     maxValue?: number; //NoteRange;
     note: number; //NoteRange;

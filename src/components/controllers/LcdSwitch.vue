@@ -21,7 +21,7 @@ const shortWait = 250;
 
 const longPressedHook = ref(false);
 let step = 1;
-let interval: number | null = null;
+let interval: NodeJS.Timeout | null = null;
 
 function resetHook() {
     if (interval && longPressedHook.value) {
@@ -39,7 +39,7 @@ function onLongPressCallbackHook(e: Event, callback: CallableFunction) {
         step = 10;
         setTimeout(() => {
             if (interval) {
-                clearInterval(interval as number);
+                clearInterval(interval);
                 interval = setInterval(() => callback(e, false), shortWait);
             }
         }, longWait);
@@ -109,6 +109,7 @@ function changeValue(value: number, emitChange = true) {
             />
             <div class="flex flex-col items-center justify-between text-xs mt-0.5" :class="{ invert: !invert }">
                 <button
+                    type="button"
                     class="opacity-30 hover:opacity-100 transition-opacity"
                     @click="incrementValue"
                     v-on-long-press="[(e: Event) => onLongPressCallbackHook(e, incrementValue), { delay, modifiers: { prevent: true } }]"
@@ -117,6 +118,7 @@ function changeValue(value: number, emitChange = true) {
                     <PlusIcon class="select-none" />
                 </button>
                 <button
+                    type="button"
                     class="opacity-30 hover:opacity-100 transition-opacity"
                     @click="decrementValue"
                     v-on-long-press="[(e: Event) => onLongPressCallbackHook(e, decrementValue), { delay, modifiers: { prevent: true } }]"

@@ -1,4 +1,4 @@
-import type { ChannelRange, IDeviceConfig, IDeviceControllers, IControllerConfigs, VariableStyle } from "@/services/types/devices";
+import type { ChannelRange, IDeviceConfig, IDeviceControllers, IControllerConfigs, RotaryStyle } from "@/services/types/devices";
 import { ObjectUtils, Validators } from "@/services/classes/Utils";
 import Color from "@/services/classes/Color";
 // import { sealed, MyObjectListener, Listener } from "@/services/types/decorators";
@@ -17,32 +17,62 @@ export default class Outboard implements IDeviceConfig {
     private _borderSize = 0;
     private _hasMultiSelection = false;
     private _category: string;
-    private _style: VariableStyle = "dark";
+    private _style: RotaryStyle = "dark";
     private _logo?: string;
     private _controllers: IDeviceControllers;
     private _channel: ChannelRange = 1;
     private _output?: Output;
+    private _originalConfigs: IDeviceConfig;
     readonly stock: boolean;
-    readonly originalConfigs: IDeviceConfig;
     readonly key: string;
 
     public constructor(config: IDeviceConfig) {
-        this.originalConfigs = Object.freeze(ObjectUtils.clone<IDeviceConfig>(config));
-        this.key = this.originalConfigs.id + new Date().getTime().toString();
-        this._id = this.originalConfigs.id;
+        this._originalConfigs = Object.freeze(ObjectUtils.clone<IDeviceConfig>(config));
+        this.key = this._originalConfigs.id + new Date().getTime().toString();
+        this._id = this._originalConfigs.id;
+        this._label = this._originalConfigs.label;
+        this._backgroundColor = Outboard.parseColor(this._originalConfigs.backgroundColor);
+        this._panelColor = Outboard.parseColor(this._originalConfigs.panelColor);
+        this._borderColor = Outboard.parseColor(this._originalConfigs.borderColor);
+        if (this._originalConfigs.borderSize) this._borderSize = this._originalConfigs.borderSize;
+        this.stock = this._originalConfigs.stock;
+        this._logo = this._originalConfigs.logo;
+        for (const type in this._originalConfigs.controllers) {
+            for (const controller of this._originalConfigs.controllers[type as keyof IDeviceControllers]) {
+                controller.minValue = controller.minValue || 0;
+                controller.maxValue = controller.maxValue || 127;
+            }
+        }
+        this._controllers = this._originalConfigs.controllers;
+        this._category = this._originalConfigs.category || "uncategorized";
+        if (this._originalConfigs.style) this._style = this._originalConfigs.style;
+        // if (config.hasMultiSelection) this.hasMultiSelection = config.hasMultiSelection;
+        // {
+        //     lcds: config.controllers.lcds.map((controller) => Outboard.createController(controller)),
+        //     toggles: config.controllers.toggles.map((controller) => Outboard.createController(controller)),
+        //     rotaries: config.controllers.rotaries.map((controller) => Outboard.createController(controller)),
+        // };
+    }
+
+    public update(config: IDeviceConfig) {
+        const newOriginalConfigs = Object.freeze(ObjectUtils.clone<IDeviceConfig>(config));
+        for (const type in newOriginalConfigs.controllers) {
+            for (const controller of newOriginalConfigs.controllers[type as keyof IDeviceControllers]) {
+                controller.minValue = controller.minValue || 0;
+                controller.maxValue = controller.maxValue || 127;
+                const oldController = this.getController(controller.label);
+                if (oldController) {
+                    controller.value = oldController.value;
+                }
+            }
+        }
+        this._originalConfigs = newOriginalConfigs;
         this._label = this.originalConfigs.label;
         this._backgroundColor = Outboard.parseColor(this.originalConfigs.backgroundColor);
         this._panelColor = Outboard.parseColor(this.originalConfigs.panelColor);
         this._borderColor = Outboard.parseColor(this.originalConfigs.borderColor);
         if (this.originalConfigs.borderSize) this._borderSize = this.originalConfigs.borderSize;
-        this.stock = this.originalConfigs.stock;
-        this._logo = this.originalConfigs.logo;
-        for (const type in this.originalConfigs.controllers) {
-            for (const controller of this.originalConfigs.controllers[type as keyof IDeviceControllers]) {
-                controller.minValue = controller.minValue || 0;
-                controller.maxValue = controller.maxValue || 127;
-            }
-        }
+        this._logo = this._originalConfigs.logo;
         this._controllers = this.originalConfigs.controllers;
         this._category = this.originalConfigs.category || "uncategorized";
         if (this.originalConfigs.style) this._style = this.originalConfigs.style;
@@ -161,12 +191,12 @@ export default class Outboard implements IDeviceConfig {
         this._category = value !== undefined && value.length > 0 ? value : "uncategorized";
     }
 
-    get style(): VariableStyle {
+    get style(): RotaryStyle {
         return this._style;
     }
 
     /** the device's rotary style */
-    set style(value: VariableStyle) {
+    set style(value: RotaryStyle) {
         this.checkStock();
         this._style = value;
     }
@@ -206,6 +236,10 @@ export default class Outboard implements IDeviceConfig {
         return this._controllers;
     }
 
+    get originalConfigs(): IDeviceConfig {
+        return this._originalConfigs;
+    }
+
     private getControllerList(controller: IControllerConfigs) {
         switch (controller.type) {
             case "LCD":
@@ -213,7 +247,9 @@ export default class Outboard implements IDeviceConfig {
             case "TOGGLE":
                 return this.controllers.toggles;
             case "ROTARY":
-                return this.controllers.rotaries;
+                return this.controllers.rotaries.filter((r) => r.type === "ROTARY");
+            case "STEP":
+                return this.controllers.rotaries.filter((r) => r.type === "STEP");
         }
     }
 
@@ -233,6 +269,16 @@ export default class Outboard implements IDeviceConfig {
         if (foundIdx === -1) throw new Error("Controller not found");
 
         list.splice(foundIdx, 1);
+    }
+
+    public getController(label: string): IControllerConfigs | undefined {
+        for (const type in this.controllers) {
+            for (const controller of this.controllers[type as keyof IDeviceControllers]) {
+                if (controller.label === label) return controller;
+            }
+        }
+
+        return undefined;
     }
 
     // private static createController(controller: IControllerConfigs) {

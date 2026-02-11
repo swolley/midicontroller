@@ -246,8 +246,7 @@ function clearLogo() {
                                 <!-- <label for="type" class="form-label">type</label> -->
                                 <div class="flex items-center form-select">
                                     <div class="w-5">
-                                        <StepIcon v-if="device.style === 'step'" />
-                                        <RotaryIcon v-else-if="controller.type === 'ROTARY'" :pot-style="device.style" />
+                                        <RotaryIcon v-if="controller.type === 'ROTARY'" :pot-style="device.style" />
                                         <LightLed v-else-if="controller.type === 'TOGGLE'" status="off" />
                                         <LcdIcon v-else-if="controller.type === 'LCD'" :invert="false" />
                                     </div>
