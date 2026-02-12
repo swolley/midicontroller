@@ -7,7 +7,6 @@ import outboards from "../../config/outboard";
 import Outboard from "@/services/classes/Outboard";
 import { computed, ref } from "vue";
 import { Http } from "@/services/classes/Http";
-import type { Output } from "webmidi";
 
 const consoleColor = ["%cRackStore", "color: #437bad"];
 

@@ -1,13 +1,9 @@
-import type { ChannelRange, IDeviceConfig, IDeviceControllers, IControllerConfigs, RotaryStyle } from "@/services/types/devices";
+import type { ChannelRange, IDeviceConfig, IDeviceControllers, IControllerConfigs, IOutputPort, RotaryStyle } from "@/services/types/devices";
 import { ObjectUtils, Validators } from "@/services/classes/Utils";
 import Color from "@/services/classes/Color";
-// import { sealed, MyObjectListener, Listener } from "@/services/types/decorators";
-import type { Output } from "webmidi";
 
 const notValidError = "Not a valid color";
 
-// @sealed
-// @Listener(new MyObjectListener())
 export default class Outboard implements IDeviceConfig {
     private _id: string;
     private _label: string;
@@ -21,7 +17,7 @@ export default class Outboard implements IDeviceConfig {
     private _logo?: string;
     private _controllers: IDeviceControllers;
     private _channel: ChannelRange = 1;
-    private _output?: Output;
+    private _output?: IOutputPort;
     private _originalConfigs: IDeviceConfig;
     readonly stock: boolean;
     readonly key: string;
@@ -221,12 +217,12 @@ export default class Outboard implements IDeviceConfig {
         this._channel = channel;
     }
 
-    get outputInterface(): Output | undefined {
+    get outputInterface(): IOutputPort | undefined {
         return this._output;
     }
 
-    /** the device's MIDI output interface */
-    set outputInterface(output: Output | undefined) {
+    /** the device's MIDI/output interface (WebMidi Output or HttpOutput) */
+    set outputInterface(output: IOutputPort | undefined) {
         this.checkStock();
         this._output = output;
     }

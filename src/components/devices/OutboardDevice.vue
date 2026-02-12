@@ -7,7 +7,6 @@ import { useDevice } from "@/composables/useDevice";
 // import UploadIcon from "../icons/UploadIcon.vue";
 // import DownloadIcon from "../icons/DownloadIcon.vue";
 import LightLed from "@/components/controllers/LightLed.vue";
-import type Midi from "@/services/classes/Midi";
 import ToggleButton from "@/components/controllers/ToggleButton.vue";
 import LcdDisplay from "@/components/controllers/LcdDisplay.vue";
 import LcdSwitch from "@/components/controllers/LcdSwitch.vue";
@@ -16,7 +15,7 @@ import StepButton from "@/components/controllers/StepButton.vue";
 import PaletteIcon from "@/components/icons/PaletteIcon.vue";
 import type Outboard from "@/services/classes/Outboard";
 import TrashIcon from "@/components/icons/TrashIcon.vue";
-import type { Output } from "webmidi";
+import type { IComunicator, IOutputPort } from "@/services/types/devices";
 
 const props = defineProps<{
     collapsable: boolean;
@@ -25,7 +24,7 @@ const props = defineProps<{
     device: Outboard;
     isSelected: boolean;
     draggable?: boolean;
-    midi: Midi;
+    midi: IComunicator;
 }>();
 
 const { lcds, rotaries, toggles, currentDevice } = useDevice(props.device);
@@ -44,7 +43,7 @@ let blinkTimeout: NodeJS.Timeout | null = null;
 let displayTimeout: NodeJS.Timeout | null = null;
 const blinkDuration = 300;
 
-function changeInteface(output: Output | undefined) {
+function changeInteface(output: IOutputPort | undefined) {
     // deviceStore.changeDeviceInterface(currentDevice, output);
     currentDevice.outputInterface = output;
 }

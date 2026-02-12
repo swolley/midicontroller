@@ -33,13 +33,48 @@ export class StringUtils {
     }
 }
 
+/** Validation helpers using the validator library. */
 export class Validators {
+    /** Hex color (#RGB, #RRGGBB) or "transparent". */
     public static isColor(str: string | undefined): boolean {
         return str === undefined || str === "transparent" || validator.isHexColor(str.toUpperCase());
     }
 
+    /** Non-negative integer (string or number). */
     public static isUnsignedInt(value: string | number): boolean {
-        return typeof value === "number" ? value > 0 && value.toString().includes(".") : validator.isInt(value, { min: 0 });
+        if (typeof value === "number") {
+            return Number.isInteger(value) && value >= 0 && !Number.isNaN(value);
+        }
+        return validator.isInt(value, { min: 0 });
+    }
+
+    /** MIDI channel 1–16. */
+    public static isMidiChannel(value: string | number): boolean {
+        const n = typeof value === "number" ? value : parseInt(value, 10);
+        return Number.isInteger(n) && n >= 1 && n <= 16 && !Number.isNaN(n);
+    }
+
+    /** MIDI note or controller number 0–127. */
+    public static isMidiNote(value: string | number): boolean {
+        const n = typeof value === "number" ? value : parseInt(value, 10);
+        return Number.isInteger(n) && n >= 0 && n <= 127 && !Number.isNaN(n);
+    }
+
+    /** MIDI velocity or value 0–127. */
+    public static isMidiVelocity(value: string | number): boolean {
+        return Validators.isMidiNote(value);
+    }
+
+    /** Valid URL (http, https, or allowLocal for relative URLs in dev). Allows localhost (no TLD). */
+    public static isUrl(str: string, options?: { allowLocal?: boolean }): boolean {
+        if (!str || typeof str !== "string") return false;
+        const trimmed = str.trim();
+        if (options?.allowLocal && (trimmed.startsWith("/") || trimmed.startsWith("./"))) return true;
+        return validator.isURL(trimmed, {
+            require_protocol: true,
+            protocols: ["http", "https"],
+            require_tld: false,
+        });
     }
 }
 

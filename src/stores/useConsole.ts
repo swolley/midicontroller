@@ -1,10 +1,7 @@
 import type { IConsoleLog, IConsole, LogType } from "@/services/types/devices";
 import { defineStore } from "pinia";
 import { ref } from "vue";
-// import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
 
-// @sealed
-// @Listener(new MyObjectListener())
 export const useConsole = defineStore("console", (): IConsole => {
     const logs = ref<IConsoleLog[]>([])
     

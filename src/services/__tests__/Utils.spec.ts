@@ -200,6 +200,37 @@ describe("Validators class", () => {
     it("test_is_unsigned_int_positive_number", () => {
         expect(Validators.isUnsignedInt("5")).equal(true);
     });
+
+    it("isUnsignedInt accepts non-negative integer number", () => {
+        expect(Validators.isUnsignedInt(0)).equal(true);
+        expect(Validators.isUnsignedInt(42)).equal(true);
+        expect(Validators.isUnsignedInt(1.5)).equal(false);
+        expect(Validators.isUnsignedInt(-1)).equal(false);
+    });
+
+    it("isMidiChannel accepts 1-16 only", () => {
+        expect(Validators.isMidiChannel(1)).equal(true);
+        expect(Validators.isMidiChannel(16)).equal(true);
+        expect(Validators.isMidiChannel(0)).equal(false);
+        expect(Validators.isMidiChannel(17)).equal(false);
+        expect(Validators.isMidiChannel("8")).equal(true);
+    });
+
+    it("isMidiNote accepts 0-127 only", () => {
+        expect(Validators.isMidiNote(0)).equal(true);
+        expect(Validators.isMidiNote(127)).equal(true);
+        expect(Validators.isMidiNote(-1)).equal(false);
+        expect(Validators.isMidiNote(128)).equal(false);
+        expect(Validators.isMidiNote("64")).equal(true);
+    });
+
+    it("isUrl accepts http/https URLs and optional local paths", () => {
+        expect(Validators.isUrl("https://api.example.com")).equal(true);
+        expect(Validators.isUrl("http://localhost:3000")).equal(true);
+        expect(Validators.isUrl("/api/midi", { allowLocal: true })).equal(true);
+        expect(Validators.isUrl("not-a-url")).equal(false);
+        expect(Validators.isUrl("")).equal(false);
+    });
 });
 
 describe("ObjectUtils class", () => {

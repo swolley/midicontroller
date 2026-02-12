@@ -1,7 +1,3 @@
-// import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
-
-// @sealed
-// @Listener(new MyObjectListener())
 export default class Color {
     private _r: number;
     private _g: number;
@@ -48,7 +44,7 @@ export default class Color {
     }
 
     private static validateValue(value: number, max: number): boolean {
-        return value >= 0 || value < max;
+        return Number.isInteger(value) && value >= 0 && value <= max && !Number.isNaN(value);
     }
 
     private static throwInvalidValueError() {

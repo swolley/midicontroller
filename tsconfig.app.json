@@ -17,6 +17,7 @@
     "jsx": "preserve",
     "strict": true,
     "noImplicitThis": true,
+    "experimentalDecorators": true,
     "verbatimModuleSyntax": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,

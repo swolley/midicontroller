@@ -1,35 +1,39 @@
-import type { Input, Output } from "webmidi";
-import type { ChannelRange } from "@/services/types/devices";
+import type { Input } from "webmidi";
+import type { ChannelRange, IComunicator, IDeviceConfig, IOutputPort, MessageType } from "@/services/types/devices";
+import { sealed } from "@/services/decorators";
 
-export default abstract class AbstractComunicator {
+@sealed
+export default abstract class AbstractComunicator implements IComunicator {
     protected _inputs: Input[] = [];
-    protected _outputs: Output[] = [];
+    protected _outputs: IOutputPort[] = [];
     protected _disabled: string[] = [];
 
-    public constructor(inputs: Input[], outputs: Output[], disabled: string[] = []) {
-        this._inputs = inputs;
+    /**
+     * @param outputs  - MIDI or HTTP output ports
+     * @param disabled - optional list of output/input ids to disable
+     * @param inputs   - optional (WebMidi inputs; only Midi passes these, Http uses [])
+     */
+    public constructor(outputs: IOutputPort[], disabled: string[] = [], inputs: Input[] = []) {
         this._outputs = outputs;
         this._disabled = disabled;
+        this._inputs = inputs;
     }
 
-    get inputs() {
+    get inputs(): Input[] {
         return this._inputs;
     }
 
-    get activeInputs() {
+    get activeInputs(): Input[] {
         return this._inputs.filter((i) => !this._disabled.includes(i.id));
     }
 
-    get outputs() {
+    get outputs(): IOutputPort[] {
         return this._outputs;
     }
 
-    get activeOutputs() {
+    get activeOutputs(): IOutputPort[] {
         return this._outputs.filter((i) => !this._disabled.includes(i.id));
     }
-
-    // addHttpInput() {}
-    // addHttpOutput() {}
 
     public isActive(id: string) {
         return !this._disabled.includes(id);
@@ -54,8 +58,25 @@ export default abstract class AbstractComunicator {
     }
 
     /**
-     * {@inheritDoc devices.d#IComunicatorInterface.getPrintableOctects}
+     * send midi message
+     * @param {string|object} outputIdx 	- midi message type
+     * @param {string} channel 				- message channel
+     * @param {string} messageType 			- midi message type
+     * @param {number} deviceIdx 			- midi interface index
+     * @param {number} note 				- message note
+     * @param {number} velocity 			- message velocity
+     * @param {number} selectedOutboardIdx 	- outboard index
      */
+    public abstract send(
+        output: IOutputPort | number,
+        channel: ChannelRange,
+        messageType: MessageType,
+        note: number,
+        velocity: number,
+        selectedOutboard: IDeviceConfig
+    ): boolean;
+
+    /** Formats status byte, note and velocity as space-separated octets (for logging). */
     protected static getPrintableOctects(messageType: number, channel: ChannelRange, note: number, velocity: number, base = 10) {
         let octects = [
             AbstractComunicator.convertBase(((messageType << 4) + (channel - 1)).toString(), 10, base),

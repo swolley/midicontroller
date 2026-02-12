@@ -1,16 +1,14 @@
-import { Enumerations, Input, InputChannel, Output, WebMidi } from "webmidi";
-import type { ChannelRange, IComunicatorInterface, MessageType } from "@/services/types/devices";
+import { Enumerations, WebMidi } from "webmidi";
+import type { ChannelRange, IDeviceConfig, IOutputPort, MessageType } from "@/services/types/devices";
+import { MessageTypeEnum } from "@/services/types/enums";
 import AbstractComunicator from "@/services/classes/AbstractComunicator";
-import type Outboard from "@/services/classes/Outboard";
-// import { Listener, MyObjectListener, sealed } from "@/services/types/decorators";
+import { sealed } from "@/services/decorators";
+
 const consoleColor = ["%cMidi", "color: #c1656e"];
 const timeout = 4000;
-// @sealed
-// @Listener(new MyObjectListener())
-/**
-@sealed @Listener(new MyObjectListener())
- */
-export default class Midi extends AbstractComunicator implements IComunicatorInterface {
+
+@sealed
+export default class Midi extends AbstractComunicator {
     public static async init(disabled?: string[]): Promise<Midi | undefined> {
         try {
             console.info(...consoleColor, "Attempting to enable WebMidi...");
@@ -57,7 +55,7 @@ export default class Midi extends AbstractComunicator implements IComunicatorInt
             //     }
             // });
 
-            return new Midi(WebMidi.inputs, WebMidi.outputs, disabled);
+            return new Midi(WebMidi.outputs, disabled ?? [], WebMidi.inputs);
         } catch (err) {
             // Gestione più sicura dell'errore per evitare riferimenti circolari
             const errorMessage = err instanceof Error ? err.message : "Unknown error";
@@ -75,26 +73,33 @@ export default class Midi extends AbstractComunicator implements IComunicatorInt
         return WebMidi.interface.sysexEnabled;
     }
 
-    private sendControlChange(output: Output, channel: ChannelRange, note: number, velocity: number, selectedOutboard: Outboard) {
+    private sendControlChange(output: IOutputPort, channel: ChannelRange, note: number, velocity: number, selectedOutboard: IDeviceConfig) {
         output.sendControlChange(note, velocity, { channels: channel });
         const octects = Midi.getPrintableOctects(Enumerations.CHANNEL_MESSAGES.controlchange, channel, note, velocity, 2);
         console.info(...consoleColor, "sending", octects, "through", output.name, "to", selectedOutboard.label);
     }
 
-    private sendProgramChange(output: Output, channel: ChannelRange, note: number, selectedOutboard: Outboard) {
+    private sendProgramChange(output: IOutputPort, channel: ChannelRange, note: number, selectedOutboard: IDeviceConfig) {
         output.sendProgramChange(note, { channels: channel });
         const octects = Midi.getPrintableOctects(Enumerations.CHANNEL_MESSAGES.programchange, channel, note, 0, 2);
         console.info(...consoleColor, "sending", octects, "through", output.name, "to", selectedOutboard.label);
     }
 
-    public send(output: Output | number, channel: ChannelRange, messageType: MessageType, note: number, velocity: number, selectedOutboard: Outboard): boolean {
+    public send(
+        output: IOutputPort | number,
+        channel: ChannelRange,
+        messageType: MessageType,
+        note: number,
+        velocity: number,
+        selectedOutboard: IDeviceConfig
+    ): boolean {
         if (typeof output === "number") output = this._outputs[output];
 
         switch (messageType) {
-            case "controlchange":
+            case MessageTypeEnum.ControlChange:
                 this.sendControlChange(output, channel, note, velocity, selectedOutboard);
                 break;
-            case "programchange":
+            case MessageTypeEnum.ProgramChange:
                 this.sendProgramChange(output, channel, note, selectedOutboard);
                 break;
             default:
@@ -103,14 +108,4 @@ export default class Midi extends AbstractComunicator implements IComunicatorInt
 
         return true;
     }
-
-    // private static onMIDIMessage(input: Input | InputChannel, messageType: MessageType, note: number, velocity: number) {
-    //     switch (messageType) {
-    //         case "controlchange":
-    //         case "programchange":
-    //         case "noteon":
-    //             console.log(messageType, note, velocity);
-    //             break;
-    //     }
-    // }
 }

@@ -11,6 +11,7 @@
         "test:unit": "vitest --environment jsdom",
         "test:e2e": "cypress open",
         "test:e2e:ci": "cypress run",
+        "test:coverage": "vitest run --coverage",
         "typecheck": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false",
         "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
         "cm": "git-cz",
@@ -60,7 +61,8 @@
         "typescript": "^5.0.4",
         "vite": "^7.3.1",
         "vitest": "^4.0.18",
-        "vue-tsc": "^1.2.0"
+        "vue-tsc": "^1.2.0",
+        "@vitest/coverage-v8": "^4.0.18"
     },
     "config": {
         "commitizen": {

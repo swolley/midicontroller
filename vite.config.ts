@@ -30,5 +30,12 @@ export default defineConfig({
     test: {
         globals: true,
         environment: "jsdom",
+        exclude: ["**/node_modules/**", "**/dist/**", "cypress/**"],
+        coverage: {
+            provider: "v8",
+            reporter: ["text", "html", "lcov"],
+            include: ["src/services/classes/**/*.ts", "src/services/decorators.ts"],
+            exclude: ["**/*.spec.ts", "**/__tests__/**"],
+        },
     },
 });

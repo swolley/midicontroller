@@ -1,43 +1,81 @@
-import { Enumerations } from "webmidi";
-import type { ChannelRange, IComunicatorInterface, IDeviceConfig, MessageType } from "@/services/types/devices";
+import type { ChannelRange, HttpComunicatorConfig, IDeviceConfig, IOutputPort, MessageType } from "@/services/types/devices";
+import { MessageTypeEnum } from "@/services/types/enums";
 import AbstractComunicator from "@/services/classes/AbstractComunicator";
-import type HttpOutput from "@/services/classes/HttpOutput";
+import HttpOutput from "@/services/classes/HttpOutput";
+import { sealed } from "@/services/decorators";
 
-const consoleColor = ["%Http", "color: #dcd3bb"];
+const consoleColor = ["%cHttp", "color: #dcd3bb"];
 
-export class Http extends AbstractComunicator implements IComunicatorInterface {
-    public send(output: HttpOutput | number, channel: ChannelRange, messageType: MessageType, note: number, velocity: number, selectedOutboard: IDeviceConfig) {
-        if (typeof output === "number") output = this._outputs[output] as HttpOutput;
+/** High nibble of MIDI status byte for getPrintableOctects (e.g. 0x0b = control change). */
+const MESSAGE_TYPE_NIBBLE: Record<MessageType, number> = {
+    [MessageTypeEnum.ControlChange]: 0x0b,
+    [MessageTypeEnum.ProgramChange]: 0x0c,
+    [MessageTypeEnum.NoteOn]: 0x09,
+    [MessageTypeEnum.Sysex]: 0xf,
+};
 
-        // let success = true;
-        let messageTypeNumber: number | null = null;
+@sealed
+export class Http extends AbstractComunicator {
+    /**
+     * Initialize HTTP comunicator from config. No WebMidi is used; outputs are remote endpoints.
+     * Use HTTPS and auth in production.
+     */
+    public static async init(config: HttpComunicatorConfig, disabled: string[] = []): Promise<Http | undefined> {
         try {
+            console.info(...consoleColor, "Initializing HTTP comunicator...");
+            if (!config.endpoints?.length) {
+                console.warn(...consoleColor, "No endpoints in config");
+                return undefined;
+            }
+            const outputs: IOutputPort[] = config.endpoints.map(
+                (ep) =>
+                    new HttpOutput({
+                        baseUrl: ep.baseUrl,
+                        id: ep.id,
+                        name: ep.name,
+                        auth: config.auth,
+                    })
+            );
+            console.info(...consoleColor, "HTTP outputs:", outputs.length);
+            return new Http(outputs, disabled);
+        } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error(...consoleColor, "HTTP init failed:", msg);
+            return undefined;
+        }
+    }
+
+    public send(
+        output: IOutputPort | number,
+        channel: ChannelRange,
+        messageType: MessageType,
+        note: number,
+        velocity: number,
+        selectedOutboard: IDeviceConfig
+    ): boolean {
+        const out = typeof output === "number" ? this._outputs[output] : output;
+        if (!out) {
+            console.error(...consoleColor, "Invalid output index or missing output");
+            return false;
+        }
+        try {
+            const messageTypeNibble = MESSAGE_TYPE_NIBBLE[messageType] ?? 0;
             switch (messageType) {
-                case "controlchange":
-                    output.sendControlChange(note, velocity, { channels: channel });
-                    messageTypeNumber = Enumerations.CHANNEL_MESSAGES.controlchange;
+                case MessageTypeEnum.ControlChange:
+                    out.sendControlChange(note, velocity, { channels: channel });
                     break;
-                case "programchange":
-                    output.sendProgramChange(note, { channels: channel });
-                    messageTypeNumber = Enumerations.CHANNEL_MESSAGES.programchange;
+                case MessageTypeEnum.ProgramChange:
+                    out.sendProgramChange(note, { channels: channel });
                     break;
                 default:
                     throw new Error(`MessageType ${messageType} not handled`);
             }
-
-            const octects = Http.getPrintableOctects(messageTypeNumber, channel, note, velocity, 2);
-            console.info(...consoleColor, "sending", octects, "through", output.name, "to", selectedOutboard.label);
+            const octects = AbstractComunicator.getPrintableOctects(messageTypeNibble, channel, note, velocity, 2);
+            console.info(...consoleColor, "sending", octects, "through", out.name, "to", selectedOutboard.label);
             return true;
         } catch (e) {
-            // success = false;
             console.error(...consoleColor, (e as Error).message);
             return false;
-        } /*finally {
-            document.dispatchEvent(
-                new CustomEvent(`messagesend`, {
-                    detail: { selectedOutboard, success },
-                })
-            );
-        }*/
+        }
     }
 }
