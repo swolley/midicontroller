@@ -6,27 +6,14 @@
 npm install
 ```
 
-### Husky Hooks Activation
+- **Husky**: il hook viene attivato automaticamente dopo `npm install` (script `prepare`). Se il file `.husky/commit-msg` non esiste ancora (primo clone), esegui una volta:
 
-```sh
-npx husky install
-```
+  ```sh
+  ./install.sh
+  ```
+  oppure manualmente: `npx husky add .husky/commit-msg 'npx --no -- commitlint --edit "$1"'`
 
-### Husky Commit Message Check
-
-```sh
-## linux / macos
-npx husky add .husky/commit-msg 'npx --no -- commitlint --edit "$1"'
-
-## windows
-npx husky add .husky\commit-msg "npx --no -- commitlint --edit $1"
-```
-
-### Initialize the Conventional Changelog adapter
-
-```sh
-npx commitizen init cz-conventional-changelog --save-dev --save-exact
-```
+- **Commit convenzionali**: `npm run cm` (Commitizen). La config è già in `package.json`.
 
 ---
 
@@ -81,17 +68,20 @@ npm run dev
 npm run build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+### Unit tests ([Vitest](https://vitest.dev/))
 
 ```sh
-npm run test:unit
+npm run test          # run once
+npm run test:unit     # watch mode
+npm run test:coverage # con report coverage
 ```
 
-### Run End-to-End Tests with [Cypress](https://www.cypress.io/)
+### E2E ([Cypress](https://www.cypress.io/))
 
 ```sh
 npm run build
-npm run test:e2e # or `npm run test:e2e:ci` for headless testing
+npm run test:e2e      # UI
+npm run test:e2e:ci   # headless
 ```
 
 ### Lint with [ESLint](https://eslint.org/)
@@ -102,7 +92,22 @@ npm run lint
 
 ---
 
-## Usefull links
+## Scripts principali
+
+| Comando | Uso |
+|--------|-----|
+| `npm run dev` | Dev server (Vite) |
+| `npm run build` | Typecheck + build produzione |
+| `npm run test` | Unit test (run once) |
+| `npm run test:coverage` | Unit test + coverage |
+| `npm run typecheck` | Solo type check |
+| `npm run lint` | ESLint + fix |
+| `npm run cm` | Commit con Commitizen (conventional) |
+| `npm run release` | Bump version + CHANGELOG + push tag (branch `main`) |
+
+---
+
+## Useful links
 
 -   [Vue](https://vuejs.org/guide/introduction.html) - Framework di sviluppo interfaccia grafica
 -   [Vue Router](https://router.vuejs.org/) - Routing system built-in in Vue
