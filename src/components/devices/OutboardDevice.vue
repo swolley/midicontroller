@@ -218,6 +218,8 @@ function dispatchCCMessage(controller: IMessageControllerConfigs, value: number)
                                 class="w-16"
                                 :controller="rotary"
                                 :invert="overPanel.isFgInverted"
+                                :style="device.style || 'dark'"
+                                @changevalue="(value: number) => dispatchCCMessage(rotary, value)"
                             />
                             <RotaryButton
                                 v-else

@@ -47,13 +47,14 @@ export const useRack = defineStore(
         ) {
             if (fromIdx === -1) throw new Error(`Device ${device.id} not found in ${fromName} list`);
             if (toIdx === -1) throw new Error(`Device ${device.id} not found in ${toName} list`);
+            const clampedToIdx = Math.min(Math.max(0, toIdx), toList.length);
             try {
                 checkBeforeMoveDevice(fromList, fromIdx);
-                checkBeforeMoveDevice(toList, toIdx);
+                checkBeforeMoveDevice(toList, clampedToIdx);
                 const removed = fromList.splice(fromIdx, 1)[0];
                 if (!removed) throw new Error(`Unable to remove device from ${fromName} list`);
                 if (toName !== "rack" && device.category !== toName) removed.category = toName;
-                toList.splice(toIdx, 0, removed);
+                toList.splice(clampedToIdx, 0, removed);
                 if (fromName !== toName) window.console.info(...consoleColor, `Device ${device.id} moved to ${toName} list`);
             } catch (e) {
                 window.console.error(...consoleColor, (e as Error).message);

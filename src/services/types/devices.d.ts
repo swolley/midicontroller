@@ -9,6 +9,8 @@ type EnumerateInternal<A extends Array<unknown>, N extends number> = { 0: A; 1: 
 type Enumerate<N extends number> = EnumerateInternal<[], N> extends (infer E)[] ? E : never;
 type Range<FROM extends number, TO extends number> = Exclude<Enumerate<TO>, Enumerate<FROM>>;
 
+export type StepStyle = "arrow" | "dot" | string;
+
 /** MIDI channel 1–16. */
 export type ChannelRange = Range<1, 17>;
 
@@ -38,7 +40,7 @@ export interface IDeviceConfig {
     logo?: string;
 }
 
-interface IControllerConfigs {
+export interface IControllerConfigs {
     note?: number; //NoteRange;
     type: ControllerType;
     label: string;
@@ -112,9 +114,7 @@ export interface IOutputPort {
 }
 
 /** Auth config for HTTP comunicator (Bearer token or API key). */
-export type HttpComunicatorAuth =
-    | { type: "bearer"; token: string }
-    | { type: "apikey"; key: string };
+export type HttpComunicatorAuth = { type: "bearer"; token: string } | { type: "apikey"; key: string };
 
 /** Config for a single HTTP endpoint (remote server with MIDI). */
 export interface HttpComunicatorEndpointConfig {

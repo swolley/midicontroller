@@ -1,5 +1,5 @@
 import type { ChannelRange, IDeviceConfig, IDeviceControllers, IControllerConfigs, IOutputPort, RotaryStyle } from "@/services/types/devices";
-import { ObjectUtils, Validators } from "@/services/classes/Utils";
+import { ObjectUtils } from "@/services/classes/Utils";
 import Color from "@/services/classes/Color";
 
 const notValidError = "Not a valid color";
@@ -251,7 +251,7 @@ export default class Outboard implements IDeviceConfig {
 
     public addController(controller: IControllerConfigs) {
         this.checkStock();
-        const list: IControllerConfigs[] = this.getControllerList(controller);
+        const list: IControllerConfigs[] = this.getControllerList(controller) || [];
         const foundIdx = list.findIndex((c) => c.label === controller.label);
         if (foundIdx !== -1) throw new Error("Controller already exists");
 
@@ -260,8 +260,8 @@ export default class Outboard implements IDeviceConfig {
 
     public deleteController(controller: IControllerConfigs) {
         this.checkStock();
-        const list: IControllerConfigs[] = this.getControllerList(controller);
-        const foundIdx = this.controllers.lcds.findIndex((c) => c.label === controller.label);
+        const list: IControllerConfigs[] = this.getControllerList(controller) || [];
+        const foundIdx = list.findIndex((c) => c.label === controller.label);
         if (foundIdx === -1) throw new Error("Controller not found");
 
         list.splice(foundIdx, 1);

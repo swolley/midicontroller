@@ -98,7 +98,7 @@ function clearLogo() {
 
 <template>
     <form v-if="device" class="select-none">
-        <div class="inset-x-0 bg-black/80 border border-white/5 rounded pt-1 z-10 shadow mb-1">
+        <div class="inset-x-0 pt-1 z-10 mb-1">
             <div class="flex gap-2 px-2 ml-5" v-if="device">
                 <div class="flex flex-col grow">
                     <label for="deviceLabel" class="form-label">label</label>
@@ -218,11 +218,10 @@ function clearLogo() {
                     </select>
                 </div>
             </div>
-            <hr class="h-px my-2 ml-7 mr-2 border-white/10" />
         </div>
         <div class="gap-2">
             <template v-for="(controllers, type) in device.controllers" :key="type">
-                <label class="form-label">{{ type }}</label>
+                <label class="form-label">{{ type === 'rotaries' ? 'rotaries / steps' : type }}</label>
                 <Container
                     class="grow-0 shrink-0 gap-1 shadow-inner"
                     drag-class="dndrop-dragging-ghost"
